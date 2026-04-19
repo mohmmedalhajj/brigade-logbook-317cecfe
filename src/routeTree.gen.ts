@@ -9,38 +9,181 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as StatsRouteImport } from './routes/stats'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as CustodyRouteImport } from './routes/custody'
+import { Route as AllocationsRouteImport } from './routes/allocations'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as MissionsIndexRouteImport } from './routes/missions.index'
+import { Route as MissionsNewRouteImport } from './routes/missions.new'
+import { Route as MissionsIdRouteImport } from './routes/missions.$id'
 
+const StatsRoute = StatsRouteImport.update({
+  id: '/stats',
+  path: '/stats',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CustodyRoute = CustodyRouteImport.update({
+  id: '/custody',
+  path: '/custody',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AllocationsRoute = AllocationsRouteImport.update({
+  id: '/allocations',
+  path: '/allocations',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MissionsIndexRoute = MissionsIndexRouteImport.update({
+  id: '/missions/',
+  path: '/missions/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MissionsNewRoute = MissionsNewRouteImport.update({
+  id: '/missions/new',
+  path: '/missions/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MissionsIdRoute = MissionsIdRouteImport.update({
+  id: '/missions/$id',
+  path: '/missions/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/allocations': typeof AllocationsRoute
+  '/custody': typeof CustodyRoute
+  '/login': typeof LoginRoute
+  '/settings': typeof SettingsRoute
+  '/stats': typeof StatsRoute
+  '/missions/$id': typeof MissionsIdRoute
+  '/missions/new': typeof MissionsNewRoute
+  '/missions/': typeof MissionsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/allocations': typeof AllocationsRoute
+  '/custody': typeof CustodyRoute
+  '/login': typeof LoginRoute
+  '/settings': typeof SettingsRoute
+  '/stats': typeof StatsRoute
+  '/missions/$id': typeof MissionsIdRoute
+  '/missions/new': typeof MissionsNewRoute
+  '/missions': typeof MissionsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/allocations': typeof AllocationsRoute
+  '/custody': typeof CustodyRoute
+  '/login': typeof LoginRoute
+  '/settings': typeof SettingsRoute
+  '/stats': typeof StatsRoute
+  '/missions/$id': typeof MissionsIdRoute
+  '/missions/new': typeof MissionsNewRoute
+  '/missions/': typeof MissionsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/allocations'
+    | '/custody'
+    | '/login'
+    | '/settings'
+    | '/stats'
+    | '/missions/$id'
+    | '/missions/new'
+    | '/missions/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/allocations'
+    | '/custody'
+    | '/login'
+    | '/settings'
+    | '/stats'
+    | '/missions/$id'
+    | '/missions/new'
+    | '/missions'
+  id:
+    | '__root__'
+    | '/'
+    | '/allocations'
+    | '/custody'
+    | '/login'
+    | '/settings'
+    | '/stats'
+    | '/missions/$id'
+    | '/missions/new'
+    | '/missions/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AllocationsRoute: typeof AllocationsRoute
+  CustodyRoute: typeof CustodyRoute
+  LoginRoute: typeof LoginRoute
+  SettingsRoute: typeof SettingsRoute
+  StatsRoute: typeof StatsRoute
+  MissionsIdRoute: typeof MissionsIdRoute
+  MissionsNewRoute: typeof MissionsNewRoute
+  MissionsIndexRoute: typeof MissionsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/stats': {
+      id: '/stats'
+      path: '/stats'
+      fullPath: '/stats'
+      preLoaderRoute: typeof StatsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/custody': {
+      id: '/custody'
+      path: '/custody'
+      fullPath: '/custody'
+      preLoaderRoute: typeof CustodyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/allocations': {
+      id: '/allocations'
+      path: '/allocations'
+      fullPath: '/allocations'
+      preLoaderRoute: typeof AllocationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +191,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/missions/': {
+      id: '/missions/'
+      path: '/missions'
+      fullPath: '/missions/'
+      preLoaderRoute: typeof MissionsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/missions/new': {
+      id: '/missions/new'
+      path: '/missions/new'
+      fullPath: '/missions/new'
+      preLoaderRoute: typeof MissionsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/missions/$id': {
+      id: '/missions/$id'
+      path: '/missions/$id'
+      fullPath: '/missions/$id'
+      preLoaderRoute: typeof MissionsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AllocationsRoute: AllocationsRoute,
+  CustodyRoute: CustodyRoute,
+  LoginRoute: LoginRoute,
+  SettingsRoute: SettingsRoute,
+  StatsRoute: StatsRoute,
+  MissionsIdRoute: MissionsIdRoute,
+  MissionsNewRoute: MissionsNewRoute,
+  MissionsIndexRoute: MissionsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
