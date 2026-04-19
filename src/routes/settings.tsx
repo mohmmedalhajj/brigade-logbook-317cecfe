@@ -22,11 +22,12 @@ export const Route = createFileRoute("/settings")({
 
 function Settings() {
   const nav = useNavigate();
+  const [confirmLogout, setConfirmLogout] = useState(false);
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h1 className="text-xl font-bold text-gold">الإعدادات</h1>
-        <Button variant="destructive" size="sm" onClick={() => { logout(); nav({ to: "/login" }); }} className="gap-1">
+        <Button variant="destructive" size="sm" onClick={() => setConfirmLogout(true)} className="gap-1">
           <LogOut className="w-3 h-3" /> خروج
         </Button>
       </div>
@@ -40,6 +41,19 @@ function Settings() {
         <TabsContent value="executors"><ExecutorsTab /></TabsContent>
         <TabsContent value="backup"><BackupTab /></TabsContent>
       </Tabs>
+
+      <AlertDialog open={confirmLogout} onOpenChange={setConfirmLogout}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>تأكيد تسجيل الخروج</AlertDialogTitle>
+            <AlertDialogDescription>هل أنت متأكد من تسجيل الخروج من الحساب؟</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction className="bg-destructive" onClick={() => { logout(); nav({ to: "/login" }); }}>تسجيل الخروج</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
