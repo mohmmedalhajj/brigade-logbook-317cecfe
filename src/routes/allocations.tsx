@@ -211,6 +211,8 @@ function ShellsTab() {
   const [items, setItems] = useState<ShellEntry[]>([]);
   const [editing, setEditing] = useState<ShellEntry | null>(null);
   const [delId, setDelId] = useState<string | null>(null);
+  const [executors, setExecutors] = useState<Executor[]>([]);
+  useEffect(() => { (async () => setExecutors(await getAll("executors")))(); }, []);
 
   async function load() {
     const all = await getAll<ShellEntry>("shells");
@@ -219,7 +221,7 @@ function ShellsTab() {
   }
   useEffect(() => { load(); }, []);
 
-  function empty(): ShellEntry { return { id: uid(), type: "هاون 82", count: 0, date: todayISO(), notes: "" }; }
+  function empty(): ShellEntry { return { id: uid(), type: "هاون 82", count: 0, date: todayISO(), executor: executors[0]?.name || "", notes: "" }; }
   async function save(e: ShellEntry) { await put("shells", e); setEditing(null); load(); }
   async function exportPdf(e: ShellEntry) {
     await exportPDF({
@@ -238,6 +240,7 @@ function ShellsTab() {
             <div>
               <div className="font-bold text-gold">{e.type}</div>
               <div className="text-xs text-muted-foreground">{e.date}</div>
+              {e.executor && <div className="text-xs text-muted-foreground">المحور: {e.executor}</div>}
               <div className="text-sm mt-1">العدد: <b>{e.count}</b></div>
               {e.notes && <div className="text-xs text-muted-foreground mt-1">{e.notes}</div>}
             </div>
@@ -261,6 +264,13 @@ function ShellsTab() {
               <Select value={editing.type} onValueChange={(v) => setEditing({ ...editing, type: v as any })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>{SHELL_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="mb-1 block">المحور</Label>
+              <Select value={editing.executor || ""} onValueChange={(v) => setEditing({ ...editing, executor: v })}>
+                <SelectTrigger><SelectValue placeholder="اختر المحور..." /></SelectTrigger>
+                <SelectContent>{executors.map((x) => <SelectItem key={x.id} value={x.name}>{x.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="grid grid-cols-2 gap-2">
