@@ -169,8 +169,10 @@ export function generateWhatsApp(mission: MissionBase, executorName: string): st
 export function generateFuelWA(entry: any): string {
   return [
     HEADER,
+    entry.executor || "",
     "الموضوع تقرير مخصصات محروقات",
     "",
+    line("المحور", entry.executor),
     line("النوع", entry.type),
     line("الاستحقاق الشهري", entry.monthlyAllowance),
     line("المسحوب", entry.withdrawn),
@@ -178,20 +180,22 @@ export function generateFuelWA(entry: any): string {
     line("التاريخ", entry.date),
     line("ملاحظات", entry.notes),
     FOOTER,
-  ].join("\n");
+  ].filter(Boolean).join("\n");
 }
 
 export function generateShellWA(entry: any): string {
   return [
     HEADER,
+    entry.executor || "",
     "الموضوع تقرير قذائف",
     "",
+    line("المحور", entry.executor),
     line("النوع", entry.type),
     line("العدد", entry.count),
     line("التاريخ", entry.date),
     line("ملاحظات", entry.notes),
     FOOTER,
-  ].join("\n");
+  ].filter(Boolean).join("\n");
 }
 
 export function generateCustodyWA(entry: any): string {
