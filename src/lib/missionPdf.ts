@@ -1,5 +1,43 @@
 import { exportPDF, htmlKV, htmlTable, htmlEscape } from "./pdf";
-import type { MissionBase } from "./db";
+import { getAll, type MissionBase, type MissionType } from "./db";
+
+// Built-in Arabic labels for known field keys (used as fallback for custom types)
+const BUILTIN_LABELS: Record<string, string> = {
+  missionNumber: "رقم المهمة",
+  missionOrder: "أمر المهمة",
+  orderSource: "جهة الأمر",
+  sector: "القطاع / أمام قطاع",
+  area: "المنطقة",
+  aircraftType: "نوع الطائرة",
+  code: "كود المهمة",
+  date: "التاريخ",
+  time: "الوقت",
+  exitTime: "وقت الخروج",
+  returnTime: "وقت العودة",
+  startTime: "وقت البداية",
+  endTime: "وقت النهاية",
+  sortiesCount: "عدد الطلعات",
+  targetsCount: "عدد الأهداف",
+  results: "النتائج",
+  notes: "ملاحظات",
+  team: "الفريق المنفذ",
+  purpose: "الغرض",
+  coordinate: "الإحداثي",
+  lv: "LV",
+  fireType: "نوع الرمي",
+  fireResults: "نتائج الرمي",
+  correction: "التصحيح المطلوب",
+  impact: "التأثير",
+  serial: "الرقم التسلسلي",
+  startCoord: "إحداثي البداية",
+  startLV: "LV البداية",
+  endCoord: "إحداثي النهاية",
+  endLV: "LV النهاية",
+  jammingType: "نوع التشويش",
+  impactPower: "قوة التأثير",
+  details: "تفاصيل موجزة",
+  targets: "الأهداف",
+};
 
 export async function missionToPDF(m: MissionBase, executorName: string) {
   const d = m.data;
@@ -96,8 +134,32 @@ export async function missionToPDF(m: MissionBase, executorName: string) {
       ["الفريق المنفذ", d.team],
     ]);
   } else {
-    title = `تقرير ${m.type}`;
-    body = htmlKV(Object.entries(d).map(([k, v]) => [k, v]));
+    // Custom user-defined mission type — look up Arabic field labels from the type definition
+    const allTypes = await getAll<MissionType>("missionTypes");
+    const typeDef = allTypes.find((t) => t.id === m.type);
+    title = `تقرير ${typeDef?.name || m.type}`;
+
+    const labelFor = (key: string): string => {
+      const fromType = typeDef?.fields.find((f) => f.key === key)?.label;
+      return fromType || BUILTIN_LABELS[key] || key;
+    };
+
+    // Preserve the field order defined in the type, then append any extra keys
+    const orderedKeys: string[] = [];
+    if (typeDef) {
+      for (const f of typeDef.fields) {
+        if (f.key in d) orderedKeys.push(f.key);
+      }
+    }
+    for (const k of Object.keys(d)) {
+      if (!orderedKeys.includes(k)) orderedKeys.push(k);
+    }
+
+    body = htmlKV(
+      orderedKeys
+        .filter((k) => d[k] !== undefined && d[k] !== null && d[k] !== "")
+        .map((k) => [labelFor(k), d[k]])
+    );
   }
 
   await exportPDF({
