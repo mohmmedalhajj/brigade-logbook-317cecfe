@@ -151,7 +151,7 @@ function FuelTab() {
       {items.length === 0 && <div className="text-center text-muted-foreground py-8">لا توجد سجلات</div>}
 
       {editing && (
-        <FuelEditor entry={editing} onSave={save} onCancel={() => setEditing(null)} />
+        <FuelEditor entry={editing} executors={executors} onSave={save} onCancel={() => setEditing(null)} />
       )}
 
       <AlertDialog open={!!delId} onOpenChange={(o) => !o && setDelId(null)}>
@@ -167,7 +167,7 @@ function FuelTab() {
   );
 }
 
-function FuelEditor({ entry, onSave, onCancel }: { entry: FuelEntry; onSave: (e: FuelEntry) => void; onCancel: () => void }) {
+function FuelEditor({ entry, executors, onSave, onCancel }: { entry: FuelEntry; executors: Executor[]; onSave: (e: FuelEntry) => void; onCancel: () => void }) {
   const [e, setE] = useState<FuelEntry>(entry);
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-4">
@@ -179,6 +179,15 @@ function FuelEditor({ entry, onSave, onCancel }: { entry: FuelEntry; onSave: (e:
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
               {FUEL_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label className="mb-1 block">المحور</Label>
+          <Select value={e.executor || ""} onValueChange={(v) => setE({ ...e, executor: v })}>
+            <SelectTrigger><SelectValue placeholder="اختر المحور..." /></SelectTrigger>
+            <SelectContent>
+              {executors.map((x) => <SelectItem key={x.id} value={x.name}>{x.name}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
