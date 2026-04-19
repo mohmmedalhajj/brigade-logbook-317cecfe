@@ -11,6 +11,9 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as MissionsIndexRouteImport } from './routes/missions.index'
+import { Route as MissionsNewRouteImport } from './routes/missions.new'
+import { Route as MissionsIdRouteImport } from './routes/missions.$id'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -22,31 +25,64 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MissionsIndexRoute = MissionsIndexRouteImport.update({
+  id: '/missions/',
+  path: '/missions/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MissionsNewRoute = MissionsNewRouteImport.update({
+  id: '/missions/new',
+  path: '/missions/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MissionsIdRoute = MissionsIdRouteImport.update({
+  id: '/missions/$id',
+  path: '/missions/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/missions/$id': typeof MissionsIdRoute
+  '/missions/new': typeof MissionsNewRoute
+  '/missions/': typeof MissionsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/missions/$id': typeof MissionsIdRoute
+  '/missions/new': typeof MissionsNewRoute
+  '/missions': typeof MissionsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/missions/$id': typeof MissionsIdRoute
+  '/missions/new': typeof MissionsNewRoute
+  '/missions/': typeof MissionsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login'
+  fullPaths: '/' | '/login' | '/missions/$id' | '/missions/new' | '/missions/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login'
-  id: '__root__' | '/' | '/login'
+  to: '/' | '/login' | '/missions/$id' | '/missions/new' | '/missions'
+  id:
+    | '__root__'
+    | '/'
+    | '/login'
+    | '/missions/$id'
+    | '/missions/new'
+    | '/missions/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LoginRoute: typeof LoginRoute
+  MissionsIdRoute: typeof MissionsIdRoute
+  MissionsNewRoute: typeof MissionsNewRoute
+  MissionsIndexRoute: typeof MissionsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -65,13 +101,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/missions/': {
+      id: '/missions/'
+      path: '/missions'
+      fullPath: '/missions/'
+      preLoaderRoute: typeof MissionsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/missions/new': {
+      id: '/missions/new'
+      path: '/missions/new'
+      fullPath: '/missions/new'
+      preLoaderRoute: typeof MissionsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/missions/$id': {
+      id: '/missions/$id'
+      path: '/missions/$id'
+      fullPath: '/missions/$id'
+      preLoaderRoute: typeof MissionsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LoginRoute: LoginRoute,
+  MissionsIdRoute: MissionsIdRoute,
+  MissionsNewRoute: MissionsNewRoute,
+  MissionsIndexRoute: MissionsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
