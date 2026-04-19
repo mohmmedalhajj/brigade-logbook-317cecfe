@@ -1,0 +1,200 @@
+// Generate WhatsApp text reports - text only, numeric numbering, no symbols
+import type { MissionBase } from "./db";
+
+const HEADER = "بسم الله الرحمن الرحيم\nصقور ل1 مغاوير";
+const FOOTER = ".........إنتهى أخي........";
+
+function line(label: string, value: any) {
+  if (value === undefined || value === null || value === "") return `${label}:`;
+  return `${label}: ${value}`;
+}
+
+function numberedList(text: string): string {
+  if (!text) return "";
+  const parts = String(text).split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
+  return parts.map((p, i) => `${i + 1} ${p}`).join("\n");
+}
+
+export function generateWhatsApp(mission: MissionBase, executorName: string): string {
+  const d = mission.data;
+  const executor = executorName || mission.executor || "";
+
+  if (mission.type === "recon") {
+    return [
+      HEADER,
+      executor,
+      "الموضوع تقرير مهمة",
+      "",
+      "تفاصيل المهمة",
+      line("أمر المهمة من", d.missionOrder),
+      "نوع المهمة: استطلاع",
+      line("رقم المهمة", d.missionNumber),
+      line("أمام قطاع", d.sector),
+      line("تاريخ", d.date),
+      line("الخروج", d.exitTime),
+      line("العودة", d.returnTime),
+      line("عدد الطلعات", d.sortiesCount),
+      line("عدد الأهداف", d.targetsCount),
+      "",
+      "نتائج المهمة",
+      numberedList(d.results || ""),
+      "",
+      line("ملاحظة", d.notes),
+      line("الفريق المنفذ", d.team),
+      FOOTER,
+    ].join("\n");
+  }
+
+  if (mission.type === "strike") {
+    const targets: any[] = Array.isArray(d.targets) ? d.targets : [];
+    const targetsText = targets.length
+      ? targets
+          .map((t, i) => {
+            return [
+              `${i + 1}`,
+              line("الهدف", t.targetType),
+              `الإحداثي: ${t.coordinate || ""}    LV ${t.lv || ""}`,
+              line("الوقت", t.time),
+              line("نوع المقذوف", t.projectile),
+              line("قوة الضربة", t.power),
+              line("ملاحظات", t.notes),
+            ].join("\n");
+          })
+          .join("\n\n")
+      : "";
+    return [
+      HEADER,
+      executor,
+      "الموضوع تقرير مهمة",
+      "",
+      "تفاصيل المهمة",
+      "نوع المهمة: استهداف",
+      line("رقم المهمة", d.missionNumber),
+      line("جهة الأمر", d.orderSource),
+      line("القطاع", d.sector),
+      line("المنطقة", d.area),
+      line("نوع الطائرة", d.aircraftType),
+      line("كود المهمة", d.code),
+      line("التاريخ", d.date),
+      line("الخروج", d.startTime),
+      line("العودة", d.endTime),
+      line("عدد الطلعات", d.sortiesCount),
+      line("الغرض", d.purpose),
+      "",
+      "الأهداف",
+      targetsText,
+      "",
+      line("ملاحظة", d.notes),
+      FOOTER,
+    ].join("\n");
+  }
+
+  if (mission.type === "artillery") {
+    return [
+      HEADER,
+      executor,
+      "الموضوع تقرير مهمة تصحيح مدفعي",
+      "",
+      "تفاصيل المهمة",
+      line("رقم المهمة", d.missionNumber),
+      line("أمر المهمة", d.missionOrder),
+      line("القطاع", d.sector),
+      line("التاريخ", d.date),
+      `الإحداثي: ${d.coordinate || ""}    LV ${d.lv || ""}`,
+      line("نوع الرمي", d.fireType),
+      line("نتائج الرمي", d.fireResults),
+      line("التصحيح المطلوب", d.correction),
+      line("التأثير", d.impact),
+      "",
+      line("ملاحظة", d.notes),
+      FOOTER,
+    ].join("\n");
+  }
+
+  if (mission.type === "jamming") {
+    return [
+      HEADER,
+      executor,
+      "الموضوع تقرير تشويش",
+      "",
+      "تفاصيل المهمة",
+      line("رقم المهمة", d.missionNumber),
+      line("أمام قطاع", d.sector),
+      line("التاريخ", d.date),
+      line("الوقت", d.time),
+      line("نوع الطائرة", d.aircraftType),
+      line("الرقم التسلسلي", d.serial),
+      `إحداثي البداية: ${d.startCoord || ""}    LV ${d.startLV || ""}`,
+      `إحداثي النهاية: ${d.endCoord || ""}    LV ${d.endLV || ""}`,
+      line("نوع التشويش", d.jammingType),
+      line("قوة التأثير", d.impactPower),
+      line("تفاصيل موجزة", d.details),
+      line("الفريق المنفذ", d.team),
+      "",
+      FOOTER,
+    ].join("\n");
+  }
+
+  // Custom type - generic
+  return [
+    HEADER,
+    executor,
+    `الموضوع تقرير مهمة`,
+    "",
+    line("رقم المهمة", d.missionNumber),
+    ...Object.entries(d)
+      .filter(([k]) => k !== "missionNumber")
+      .map(([k, v]) => line(k, v)),
+    FOOTER,
+  ].join("\n");
+}
+
+export function generateFuelWA(entry: any): string {
+  return [
+    HEADER,
+    "الموضوع تقرير مخصصات محروقات",
+    "",
+    line("النوع", entry.type),
+    line("الاستحقاق الشهري", entry.monthlyAllowance),
+    line("المسحوب", entry.withdrawn),
+    line("المتبقي", entry.monthlyAllowance - entry.withdrawn),
+    line("التاريخ", entry.date),
+    line("ملاحظات", entry.notes),
+    FOOTER,
+  ].join("\n");
+}
+
+export function generateShellWA(entry: any): string {
+  return [
+    HEADER,
+    "الموضوع تقرير قذائف",
+    "",
+    line("النوع", entry.type),
+    line("العدد", entry.count),
+    line("التاريخ", entry.date),
+    line("ملاحظات", entry.notes),
+    FOOTER,
+  ].join("\n");
+}
+
+export function generateCustodyWA(entry: any): string {
+  return [
+    HEADER,
+    "الموضوع عهدة",
+    "",
+    line("الرقم", entry.number),
+    line("التاريخ", entry.deliveryDate),
+    "",
+    entry.text,
+    FOOTER,
+  ].join("\n");
+}
+
+export function shareWhatsApp(text: string) {
+  const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+  window.open(url, "_blank");
+}
+
+export function copyText(text: string) {
+  if (navigator.clipboard) navigator.clipboard.writeText(text);
+}

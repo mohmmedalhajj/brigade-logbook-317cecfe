@@ -1,0 +1,26 @@
+{
+  "name": "صقور اللواء الأول مغاوير",
+  "short_name": "صقور المغاوير",
+  "description": "تطبيق إدارة العمليات العسكرية - صقور اللواء الأول مغاوير",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a0f0a",
+  "theme_color": "#1a3a1a",
+  "lang": "ar",
+  "dir": "rtl",
+  "icons": [
+    {
+      "src": "/logo.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ]
+}
