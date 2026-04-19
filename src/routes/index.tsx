@@ -3,18 +3,11 @@ import { useEffect, useState } from "react";
 import { AuthGate } from "@/components/AuthGate";
 import { AppShell } from "@/components/AppShell";
 import { getAll } from "@/lib/db";
-import type { MissionBase, FuelEntry, ShellEntry, CustodyEntry } from "@/lib/db";
+import type { MissionBase, FuelEntry, ShellEntry, CustodyEntry, MissionType } from "@/lib/db";
 import { ListTodo, Target, Fuel, Package, Crosshair, Radio } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 
 export const Route = createFileRoute("/")({ component: () => <AuthGate><AppShell><Home /></AppShell></AuthGate> });
-
-const TYPE_NAMES: Record<string, string> = {
-  recon: "استطلاع",
-  strike: "استهداف",
-  artillery: "تصحيح مدفعي",
-  jamming: "تشويش",
-};
 
 function StatCard({ icon: Icon, label, value, color }: { icon: any; label: string; value: any; color: string }) {
   return (
@@ -37,6 +30,7 @@ function Home() {
   const [fuel, setFuel] = useState<FuelEntry[]>([]);
   const [shells, setShells] = useState<ShellEntry[]>([]);
   const [custody, setCustody] = useState<CustodyEntry[]>([]);
+  const [types, setTypes] = useState<MissionType[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -44,8 +38,11 @@ function Home() {
       setFuel(await getAll("fuel"));
       setShells(await getAll("shells"));
       setCustody(await getAll("custody"));
+      setTypes(await getAll("missionTypes"));
     })();
   }, []);
+
+  const typeName = (id: string) => types.find((t) => t.id === id)?.name || id;
 
   const targetsCount = missions.reduce((sum, m) => {
     if (m.type === "strike" && Array.isArray(m.data?.targets)) return sum + m.data.targets.length;
@@ -59,7 +56,7 @@ function Home() {
       acc[m.type] = (acc[m.type] || 0) + 1;
       return acc;
     }, {})
-  ).map(([k, v]) => ({ name: TYPE_NAMES[k] || k, value: v }));
+  ).map(([k, v]) => ({ name: typeName(k), value: v }));
 
   const COLORS = ["#4a7a4a", "#a02828", "#c9a84c", "#3b6fa0", "#8b5fbf"];
 
