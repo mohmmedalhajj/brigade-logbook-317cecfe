@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AuthGate } from "@/components/AuthGate";
 import { AppShell } from "@/components/AppShell";
 import { useEffect, useState } from "react";
-import { getAll, put, del, uid, type FuelEntry, type ShellEntry } from "@/lib/db";
+import { getAll, put, del, uid, type FuelEntry, type ShellEntry, type Executor } from "@/lib/db";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,8 +59,11 @@ function FuelTab() {
   }
   useEffect(() => { load(); }, []);
 
+  const [executors, setExecutors] = useState<Executor[]>([]);
+  useEffect(() => { (async () => setExecutors(await getAll("executors")))(); }, []);
+
   function emptyEntry(): FuelEntry {
-    return { id: uid(), type: "بترول", monthlyAllowance: 0, withdrawn: 0, date: todayISO(), month: currentMonth(), notes: "" };
+    return { id: uid(), type: "بترول", monthlyAllowance: 0, withdrawn: 0, date: todayISO(), month: currentMonth(), executor: executors[0]?.name || "", notes: "" };
   }
 
   // remaining per type for current month
