@@ -126,14 +126,14 @@ function FuelTab() {
     <div className="space-y-3">
       <Button onClick={() => setEditing(emptyEntry())} className="gap-1 bg-primary"><Plus className="w-4 h-4" /> إضافة محروقات</Button>
 
-      {FUEL_TYPES.map((t) => {
-        const r = monthlyRemaining(t);
+      {summaryGroups.map(({ type, executor }) => {
+        const r = groupRemaining(type, executor);
         if (!r) return null;
         const low = r.remaining <= 0;
         return (
-          <div key={t} className={`rounded-lg p-3 border ${low ? "border-destructive bg-destructive/10" : "border-border bg-muted/20"}`}>
+          <div key={`${type}|${executor}`} className={`rounded-lg p-3 border ${low ? "border-destructive bg-destructive/10" : "border-border bg-muted/20"}`}>
             <div className="flex items-center justify-between text-sm">
-              <span className="font-bold">{t}</span>
+              <span className="font-bold">{type} {executor && <span className="text-muted-foreground font-normal">— {executor}</span>}</span>
               <span>المتبقي: <b className={low ? "text-destructive" : "text-gold"}>{r.remaining} لتر</b> / {r.allowance} لتر</span>
             </div>
             {low && <div className="flex items-center gap-1 text-xs text-destructive mt-1"><AlertCircle className="w-3 h-3" /> نفد المخصص — التجديد بداية الشهر</div>}
@@ -141,15 +141,18 @@ function FuelTab() {
         );
       })}
 
-      {items.map((e) => (
+      {items.map((e) => {
+        const r = groupRemaining(e.type, e.executor || "");
+        const remainingForGroup = r ? r.remaining : (e.monthlyAllowance - e.withdrawn);
+        return (
         <div key={e.id} className="military-card rounded-xl p-4">
           <div className="flex justify-between items-start">
             <div>
               <div className="font-bold text-gold">{e.type}</div>
-              <div className="text-xs text-muted-foreground mt-1">{e.date} • {e.month}</div>
+              <div className="text-xs text-muted-foreground mt-1">{e.date}{e.time ? ` • ${e.time}` : ""} • {e.month}</div>
               {e.executor && <div className="text-xs text-muted-foreground">المحور: {e.executor}</div>}
               <div className="text-sm mt-2">
-                المخصص: <b>{e.monthlyAllowance} لتر</b> | المسحوب: <b>{e.withdrawn} لتر</b> | المتبقي: <b className="text-gold">{e.monthlyAllowance - e.withdrawn} لتر</b>
+                المخصص: <b>{e.monthlyAllowance} لتر</b> | المسحوب: <b>{e.withdrawn} لتر</b> | المتبقي: <b className="text-gold">{remainingForGroup} لتر</b>
               </div>
               {e.notes && <div className="text-xs text-muted-foreground mt-1">{e.notes}</div>}
             </div>
