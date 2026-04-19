@@ -56,26 +56,55 @@ async function loadImageAsDataURL(url: string): Promise<string> {
 }
 
 export async function exportPDF(opts: PDFOptions) {
-  const wrapper = buildHtml(opts);
-  // Replace logo src with data URL to ensure it loads
-  const logoDataUrl = await loadImageAsDataURL(logoUrl);
-  const img = wrapper.querySelector("img");
-  if (img) img.src = logoDataUrl;
-
-  document.body.appendChild(wrapper);
-  // wait fonts
-  if ((document as any).fonts?.ready) {
-    try { await (document as any).fonts.ready; } catch {}
-  }
-  await new Promise((r) => setTimeout(r, 150));
+  // Render inside a sandboxed iframe so the project's CSS (which uses oklch()
+  // color tokens) cannot leak into html2canvas — html2canvas cannot parse oklch.
+  const iframe = document.createElement("iframe");
+  iframe.style.cssText = "position:fixed; top:-10000px; left:0; width:794px; height:10px; border:0;";
+  document.body.appendChild(iframe);
 
   try {
+    const doc = iframe.contentDocument!;
+    doc.open();
+    doc.write(`<!DOCTYPE html><html dir="rtl"><head><meta charset="utf-8">
+      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+      <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+      <style>
+        *,*::before,*::after{box-sizing:border-box;}
+        html,body{margin:0;padding:0;background:#ffffff;color:#111;font-family:"Cairo","Segoe UI",Tahoma,Arial,sans-serif;direction:rtl;}
+      </style>
+    </head><body></body></html>`);
+    doc.close();
+
+    const wrapper = buildHtml(opts);
+    // Strip the off-screen positioning since the iframe itself is hidden
+    wrapper.style.position = "static";
+    wrapper.style.top = "auto";
+
+    // Ensure logo is embedded as data URL so it loads inside the iframe
+    const logoDataUrl = await loadImageAsDataURL(logoUrl);
+    const img = wrapper.querySelector("img");
+    if (img) img.src = logoDataUrl;
+
+    doc.body.appendChild(wrapper);
+
+    // Wait for fonts inside the iframe + small settle delay
+    if ((doc as any).fonts?.ready) {
+      try { await (doc as any).fonts.ready; } catch {}
+    }
+    await new Promise((r) => setTimeout(r, 250));
+
+    // Resize iframe to fit content for accurate capture
+    iframe.style.height = `${wrapper.scrollHeight + 20}px`;
+
     const canvas = await html2canvas(wrapper, {
       scale: 2,
       backgroundColor: "#ffffff",
       useCORS: true,
       allowTaint: true,
       logging: false,
+      windowWidth: 794,
+      windowHeight: wrapper.scrollHeight + 20,
     });
 
     const imgData = canvas.toDataURL("image/jpeg", 0.92);
@@ -96,8 +125,11 @@ export async function exportPDF(opts: PDFOptions) {
       heightLeft -= pageH;
     }
     pdf.save(opts.filename);
+  } catch (err) {
+    console.error("PDF export failed:", err);
+    throw err;
   } finally {
-    document.body.removeChild(wrapper);
+    document.body.removeChild(iframe);
   }
 }
 
