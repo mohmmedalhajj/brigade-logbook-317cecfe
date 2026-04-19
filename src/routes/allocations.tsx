@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AuthGate } from "@/components/AuthGate";
 import { AppShell } from "@/components/AppShell";
 import { useEffect, useState } from "react";
-import { getAll, put, del, uid, type FuelEntry, type ShellEntry } from "@/lib/db";
+import { getAll, put, del, uid, type FuelEntry, type ShellEntry, type Executor } from "@/lib/db";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,8 +59,11 @@ function FuelTab() {
   }
   useEffect(() => { load(); }, []);
 
+  const [executors, setExecutors] = useState<Executor[]>([]);
+  useEffect(() => { (async () => setExecutors(await getAll("executors")))(); }, []);
+
   function emptyEntry(): FuelEntry {
-    return { id: uid(), type: "بترول", monthlyAllowance: 0, withdrawn: 0, date: todayISO(), month: currentMonth(), notes: "" };
+    return { id: uid(), type: "بترول", monthlyAllowance: 0, withdrawn: 0, date: todayISO(), month: currentMonth(), executor: executors[0]?.name || "", notes: "" };
   }
 
   // remaining per type for current month
@@ -93,6 +96,7 @@ function FuelTab() {
       title: "تقرير محروقات",
       bodyHtml: htmlKV([
         ["النوع", e.type],
+        ["المحور", e.executor || ""],
         ["الاستحقاق الشهري", e.monthlyAllowance],
         ["المسحوب", e.withdrawn],
         ["المتبقي", e.monthlyAllowance - e.withdrawn],
@@ -129,6 +133,7 @@ function FuelTab() {
             <div>
               <div className="font-bold text-gold">{e.type}</div>
               <div className="text-xs text-muted-foreground mt-1">{e.date} • {e.month}</div>
+              {e.executor && <div className="text-xs text-muted-foreground">المحور: {e.executor}</div>}
               <div className="text-sm mt-2">
                 المخصص: <b>{e.monthlyAllowance}</b> | المسحوب: <b>{e.withdrawn}</b> | المتبقي: <b className="text-gold">{e.monthlyAllowance - e.withdrawn}</b>
               </div>
@@ -147,7 +152,7 @@ function FuelTab() {
       {items.length === 0 && <div className="text-center text-muted-foreground py-8">لا توجد سجلات</div>}
 
       {editing && (
-        <FuelEditor entry={editing} onSave={save} onCancel={() => setEditing(null)} />
+        <FuelEditor entry={editing} executors={executors} onSave={save} onCancel={() => setEditing(null)} />
       )}
 
       <AlertDialog open={!!delId} onOpenChange={(o) => !o && setDelId(null)}>
@@ -163,7 +168,7 @@ function FuelTab() {
   );
 }
 
-function FuelEditor({ entry, onSave, onCancel }: { entry: FuelEntry; onSave: (e: FuelEntry) => void; onCancel: () => void }) {
+function FuelEditor({ entry, executors, onSave, onCancel }: { entry: FuelEntry; executors: Executor[]; onSave: (e: FuelEntry) => void; onCancel: () => void }) {
   const [e, setE] = useState<FuelEntry>(entry);
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-4">
@@ -175,6 +180,15 @@ function FuelEditor({ entry, onSave, onCancel }: { entry: FuelEntry; onSave: (e:
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
               {FUEL_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label className="mb-1 block">المحور</Label>
+          <Select value={e.executor || ""} onValueChange={(v) => setE({ ...e, executor: v })}>
+            <SelectTrigger><SelectValue placeholder="اختر المحور..." /></SelectTrigger>
+            <SelectContent>
+              {executors.map((x) => <SelectItem key={x.id} value={x.name}>{x.name}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
@@ -198,6 +212,8 @@ function ShellsTab() {
   const [items, setItems] = useState<ShellEntry[]>([]);
   const [editing, setEditing] = useState<ShellEntry | null>(null);
   const [delId, setDelId] = useState<string | null>(null);
+  const [executors, setExecutors] = useState<Executor[]>([]);
+  useEffect(() => { (async () => setExecutors(await getAll("executors")))(); }, []);
 
   async function load() {
     const all = await getAll<ShellEntry>("shells");
@@ -206,12 +222,12 @@ function ShellsTab() {
   }
   useEffect(() => { load(); }, []);
 
-  function empty(): ShellEntry { return { id: uid(), type: "هاون 82", count: 0, date: todayISO(), notes: "" }; }
+  function empty(): ShellEntry { return { id: uid(), type: "هاون 82", count: 0, date: todayISO(), executor: executors[0]?.name || "", notes: "" }; }
   async function save(e: ShellEntry) { await put("shells", e); setEditing(null); load(); }
   async function exportPdf(e: ShellEntry) {
     await exportPDF({
       title: "تقرير قذائف",
-      bodyHtml: htmlKV([["النوع", e.type], ["العدد", e.count], ["التاريخ", e.date], ["ملاحظات", e.notes]]),
+      bodyHtml: htmlKV([["النوع", e.type], ["المحور", e.executor || ""], ["العدد", e.count], ["التاريخ", e.date], ["ملاحظات", e.notes]]),
       filename: `shells-${e.id}.pdf`,
     });
   }
@@ -225,6 +241,7 @@ function ShellsTab() {
             <div>
               <div className="font-bold text-gold">{e.type}</div>
               <div className="text-xs text-muted-foreground">{e.date}</div>
+              {e.executor && <div className="text-xs text-muted-foreground">المحور: {e.executor}</div>}
               <div className="text-sm mt-1">العدد: <b>{e.count}</b></div>
               {e.notes && <div className="text-xs text-muted-foreground mt-1">{e.notes}</div>}
             </div>
@@ -248,6 +265,13 @@ function ShellsTab() {
               <Select value={editing.type} onValueChange={(v) => setEditing({ ...editing, type: v as any })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>{SHELL_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="mb-1 block">المحور</Label>
+              <Select value={editing.executor || ""} onValueChange={(v) => setEditing({ ...editing, executor: v })}>
+                <SelectTrigger><SelectValue placeholder="اختر المحور..." /></SelectTrigger>
+                <SelectContent>{executors.map((x) => <SelectItem key={x.id} value={x.name}>{x.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="grid grid-cols-2 gap-2">

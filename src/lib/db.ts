@@ -17,6 +17,7 @@ export interface FuelEntry {
   withdrawn: number;
   date: string;
   month: string;
+  executor?: string;
   notes?: string;
 }
 
@@ -25,6 +26,7 @@ export interface ShellEntry {
   type: "هاون 82" | "هاون 60" | "MK40";
   count: number;
   date: string;
+  executor?: string;
   notes?: string;
 }
 
@@ -34,6 +36,7 @@ export interface CustodyEntry {
   text: string;
   image?: string;
   deliveryDate: string;
+  executor?: string;
   createdAt: number;
 }
 
