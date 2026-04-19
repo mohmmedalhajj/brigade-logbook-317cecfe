@@ -1,5 +1,6 @@
 // Generate WhatsApp text reports - text only, numeric numbering, no symbols
 import type { MissionBase } from "./db";
+import { formatTimeAr } from "./utils";
 
 const HEADER = "بسم الله الرحمن الرحيم\nصقور ل1 مغاوير";
 const FOOTER = ".........إنتهى أخي........";

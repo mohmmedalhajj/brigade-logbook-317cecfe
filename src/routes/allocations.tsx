@@ -17,6 +17,7 @@ import {
 import { generateFuelWA, generateShellWA, shareWhatsApp } from "@/lib/whatsapp";
 import { exportPDF, htmlKV, htmlTable } from "@/lib/pdf";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { formatTimeAr } from "@/lib/utils";
 
 export const Route = createFileRoute("/allocations")({
   component: () => (
