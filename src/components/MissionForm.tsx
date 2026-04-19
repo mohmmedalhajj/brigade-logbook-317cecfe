@@ -193,7 +193,8 @@ export function MissionForm({ existingId, initialType }: Props) {
           };
           await put("missions", obj);
           if (!missionId) setMissionId(id);
-          toast.success("تم حفظ المهمة");
+          toast.success("تم حفظ المهمة بنجاح");
+          nav({ to: "/missions" });
         }}
         className="w-full bg-primary gap-2"
       >

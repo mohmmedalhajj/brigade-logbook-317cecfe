@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AuthGate } from "@/components/AuthGate";
 import { AppShell } from "@/components/AppShell";
 import { useEffect, useState } from "react";
-import { getAll, type MissionBase } from "@/lib/db";
+import { getAll, type MissionBase, type MissionType } from "@/lib/db";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid, Legend } from "recharts";
 import { Button } from "@/components/ui/button";
 import { FileDown } from "lucide-react";
@@ -18,14 +18,17 @@ export const Route = createFileRoute("/stats")({
   ),
 });
 
-const TYPE_NAMES: Record<string, string> = { recon: "استطلاع", strike: "استهداف", artillery: "تصحيح مدفعي", jamming: "تشويش" };
+
 
 function Stats() {
   const [missions, setMissions] = useState<MissionBase[]>([]);
-  useEffect(() => { (async () => setMissions(await getAll("missions")))(); }, []);
+  const [types, setTypes] = useState<MissionType[]>([]);
+  useEffect(() => { (async () => { setMissions(await getAll("missions")); setTypes(await getAll("missionTypes")); })(); }, []);
+
+  const typeName = (id: string) => types.find((t) => t.id === id)?.name || id;
 
   const byType = Object.entries(missions.reduce<Record<string, number>>((a, m) => { a[m.type] = (a[m.type] || 0) + 1; return a; }, {}))
-    .map(([k, v]) => ({ name: TYPE_NAMES[k] || k, value: v }));
+    .map(([k, v]) => ({ name: typeName(k), value: v }));
 
   const monthly = (() => {
     const map: Record<string, number> = {};
@@ -47,7 +50,7 @@ function Stats() {
     const body =
       htmlKV([["الشهر", month], ["إجمالي المهام", ms.length], ["إجمالي الأهداف", targetsCount]]) +
       `<h3 style="color:#2d4a2d;">قائمة المهام</h3>` +
-      htmlTable(["#", "النوع", "رقم", "التاريخ", "القطاع"], ms.map((m, i) => [i + 1, TYPE_NAMES[m.type] || m.type, m.data?.missionNumber, m.data?.date, m.data?.sector]));
+      htmlTable(["#", "النوع", "رقم", "التاريخ", "القطاع"], ms.map((m, i) => [i + 1, typeName(m.type), m.data?.missionNumber, m.data?.date, m.data?.sector]));
     await exportPDF({ title: `تقرير الإحصائيات الشهري - ${month}`, bodyHtml: body, filename: `stats-${month}.pdf` });
   }
 
