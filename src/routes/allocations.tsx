@@ -28,6 +28,7 @@ const FUEL_TYPES = ["بترول", "ديزل"] as const;
 const SHELL_TYPES = ["هاون 82", "هاون 60", "MK40"] as const;
 const todayISO = () => new Date().toISOString().slice(0, 10);
 const currentMonth = () => new Date().toISOString().slice(0, 7);
+const currentTime = () => new Date().toTimeString().slice(0, 5);
 
 function Allocations() {
   return (
@@ -63,35 +64,49 @@ function FuelTab() {
   useEffect(() => { (async () => setExecutors(await getAll("executors")))(); }, []);
 
   function emptyEntry(): FuelEntry {
-    return { id: uid(), type: "بترول", monthlyAllowance: 0, withdrawn: 0, date: todayISO(), month: currentMonth(), executor: executors[0]?.name || "", notes: "" };
+    return { id: uid(), type: "بترول", monthlyAllowance: 0, withdrawn: 0, date: todayISO(), time: currentTime(), month: currentMonth(), executor: executors[0]?.name || "", notes: "" };
   }
 
-  // remaining per type for current month
-  const monthlyRemaining = (type: string) => {
+  // remaining per type+executor for current month
+  const groupRemaining = (type: string, executor: string) => {
     const month = currentMonth();
-    const sameType = items.filter((i) => i.type === type && i.month === month);
-    if (sameType.length === 0) return null;
-    const allowance = Math.max(...sameType.map((s) => s.monthlyAllowance || 0));
-    const withdrawn = sameType.reduce((s, e) => s + (Number(e.withdrawn) || 0), 0);
+    const same = items.filter((i) => i.type === type && (i.executor || "") === (executor || "") && i.month === month);
+    if (same.length === 0) return null;
+    const allowance = Math.max(...same.map((s) => s.monthlyAllowance || 0));
+    const withdrawn = same.reduce((s, e) => s + (Number(e.withdrawn) || 0), 0);
     return { allowance, withdrawn, remaining: allowance - withdrawn };
   };
 
+  // unique (type, executor) pairs in current month for summary cards
+  const summaryGroups = (() => {
+    const month = currentMonth();
+    const seen = new Set<string>();
+    const out: { type: string; executor: string }[] = [];
+    items.filter((i) => i.month === month).forEach((i) => {
+      const key = `${i.type}|${i.executor || ""}`;
+      if (!seen.has(key)) { seen.add(key); out.push({ type: i.type, executor: i.executor || "" }); }
+    });
+    return out;
+  })();
+
   async function save(e: FuelEntry) {
-    // enforce: cannot exceed remaining
+    // enforce per type+executor+month
     const month = e.month || currentMonth();
-    const others = items.filter((i) => i.type === e.type && i.month === month && i.id !== e.id);
+    const others = items.filter((i) => i.type === e.type && (i.executor || "") === (e.executor || "") && i.month === month && i.id !== e.id);
     const allowance = Math.max(e.monthlyAllowance || 0, ...others.map((s) => s.monthlyAllowance || 0));
     const totalWithdrawn = others.reduce((s, x) => s + (Number(x.withdrawn) || 0), 0) + Number(e.withdrawn || 0);
     if (totalWithdrawn > allowance) {
-      alert(`تنبيه: تم تجاوز المخصص الشهري (${allowance}). المسحوب الكلي: ${totalWithdrawn}`);
+      alert(`تنبيه: تم تجاوز المخصص الشهري (${allowance} لتر) للمحور "${e.executor || "غير محدد"}". المسحوب الكلي: ${totalWithdrawn} لتر`);
       return;
     }
-    await put("fuel", { ...e, month });
+    // sync allowance across same group so summary stays consistent
+    await put("fuel", { ...e, month, monthlyAllowance: allowance });
     setEditing(null);
     load();
   }
 
   async function exportPdf(e: FuelEntry) {
+    const r = groupRemaining(e.type, e.executor || "");
     await exportPDF({
       title: "تقرير محروقات",
       bodyHtml: htmlKV([
@@ -99,8 +114,9 @@ function FuelTab() {
         ["المحور", e.executor || ""],
         ["الاستحقاق الشهري", `${e.monthlyAllowance} لتر`],
         ["المسحوب", `${e.withdrawn} لتر`],
-        ["المتبقي", `${e.monthlyAllowance - e.withdrawn} لتر`],
+        ["المتبقي", `${r ? r.remaining : e.monthlyAllowance - e.withdrawn} لتر`],
         ["التاريخ", e.date],
+        ["وقت السحب", e.time || ""],
         ["الشهر", e.month],
         ["ملاحظات", e.notes],
       ]),
@@ -112,14 +128,14 @@ function FuelTab() {
     <div className="space-y-3">
       <Button onClick={() => setEditing(emptyEntry())} className="gap-1 bg-primary"><Plus className="w-4 h-4" /> إضافة محروقات</Button>
 
-      {FUEL_TYPES.map((t) => {
-        const r = monthlyRemaining(t);
+      {summaryGroups.map(({ type, executor }) => {
+        const r = groupRemaining(type, executor);
         if (!r) return null;
         const low = r.remaining <= 0;
         return (
-          <div key={t} className={`rounded-lg p-3 border ${low ? "border-destructive bg-destructive/10" : "border-border bg-muted/20"}`}>
+          <div key={`${type}|${executor}`} className={`rounded-lg p-3 border ${low ? "border-destructive bg-destructive/10" : "border-border bg-muted/20"}`}>
             <div className="flex items-center justify-between text-sm">
-              <span className="font-bold">{t}</span>
+              <span className="font-bold">{type} {executor && <span className="text-muted-foreground font-normal">— {executor}</span>}</span>
               <span>المتبقي: <b className={low ? "text-destructive" : "text-gold"}>{r.remaining} لتر</b> / {r.allowance} لتر</span>
             </div>
             {low && <div className="flex items-center gap-1 text-xs text-destructive mt-1"><AlertCircle className="w-3 h-3" /> نفد المخصص — التجديد بداية الشهر</div>}
@@ -127,15 +143,18 @@ function FuelTab() {
         );
       })}
 
-      {items.map((e) => (
+      {items.map((e) => {
+        const r = groupRemaining(e.type, e.executor || "");
+        const remainingForGroup = r ? r.remaining : (e.monthlyAllowance - e.withdrawn);
+        return (
         <div key={e.id} className="military-card rounded-xl p-4">
           <div className="flex justify-between items-start">
             <div>
               <div className="font-bold text-gold">{e.type}</div>
-              <div className="text-xs text-muted-foreground mt-1">{e.date} • {e.month}</div>
+              <div className="text-xs text-muted-foreground mt-1">{e.date}{e.time ? ` • ${e.time}` : ""} • {e.month}</div>
               {e.executor && <div className="text-xs text-muted-foreground">المحور: {e.executor}</div>}
               <div className="text-sm mt-2">
-                المخصص: <b>{e.monthlyAllowance} لتر</b> | المسحوب: <b>{e.withdrawn} لتر</b> | المتبقي: <b className="text-gold">{e.monthlyAllowance - e.withdrawn} لتر</b>
+                المخصص: <b>{e.monthlyAllowance} لتر</b> | المسحوب: <b>{e.withdrawn} لتر</b> | المتبقي: <b className="text-gold">{remainingForGroup} لتر</b>
               </div>
               {e.notes && <div className="text-xs text-muted-foreground mt-1">{e.notes}</div>}
             </div>
@@ -147,7 +166,8 @@ function FuelTab() {
             <Button size="sm" variant="destructive" onClick={() => setDelId(e.id)}><Trash2 className="w-3 h-3" /></Button>
           </div>
         </div>
-      ))}
+        );
+      })}
 
       {items.length === 0 && <div className="text-center text-muted-foreground py-8">لا توجد سجلات</div>}
 
@@ -196,7 +216,8 @@ function FuelEditor({ entry, executors, onSave, onCancel }: { entry: FuelEntry; 
           <div><Label className="mb-1 block">الاستحقاق الشهري (لتر)</Label><Input type="number" value={e.monthlyAllowance} onChange={(ev) => setE({ ...e, monthlyAllowance: Number(ev.target.value) })} /></div>
           <div><Label className="mb-1 block">المسحوب (لتر)</Label><Input type="number" value={e.withdrawn} onChange={(ev) => setE({ ...e, withdrawn: Number(ev.target.value) })} /></div>
           <div><Label className="mb-1 block">التاريخ</Label><Input type="date" value={e.date} onChange={(ev) => setE({ ...e, date: ev.target.value })} /></div>
-          <div><Label className="mb-1 block">الشهر</Label><Input type="month" value={e.month} onChange={(ev) => setE({ ...e, month: ev.target.value })} /></div>
+          <div><Label className="mb-1 block">وقت السحب</Label><Input type="time" value={e.time || ""} onChange={(ev) => setE({ ...e, time: ev.target.value })} /></div>
+          <div className="col-span-2"><Label className="mb-1 block">الشهر</Label><Input type="month" value={e.month} onChange={(ev) => setE({ ...e, month: ev.target.value })} /></div>
         </div>
         <div><Label className="mb-1 block">ملاحظات</Label><Textarea value={e.notes || ""} onChange={(ev) => setE({ ...e, notes: ev.target.value })} rows={2} /></div>
         <div className="flex gap-2">
@@ -222,12 +243,12 @@ function ShellsTab() {
   }
   useEffect(() => { load(); }, []);
 
-  function empty(): ShellEntry { return { id: uid(), type: "هاون 82", count: 0, date: todayISO(), executor: executors[0]?.name || "", notes: "" }; }
+  function empty(): ShellEntry { return { id: uid(), type: "هاون 82", count: 0, date: todayISO(), time: currentTime(), executor: executors[0]?.name || "", notes: "" }; }
   async function save(e: ShellEntry) { await put("shells", e); setEditing(null); load(); }
   async function exportPdf(e: ShellEntry) {
     await exportPDF({
       title: "تقرير قذائف",
-      bodyHtml: htmlKV([["النوع", e.type], ["المحور", e.executor || ""], ["العدد", e.count], ["التاريخ", e.date], ["ملاحظات", e.notes]]),
+      bodyHtml: htmlKV([["النوع", e.type], ["المحور", e.executor || ""], ["العدد", e.count], ["التاريخ", e.date], ["وقت السحب", e.time || ""], ["ملاحظات", e.notes]]),
       filename: `shells-${e.id}.pdf`,
     });
   }
@@ -240,7 +261,7 @@ function ShellsTab() {
           <div className="flex justify-between items-start">
             <div>
               <div className="font-bold text-gold">{e.type}</div>
-              <div className="text-xs text-muted-foreground">{e.date}</div>
+              <div className="text-xs text-muted-foreground">{e.date}{e.time ? ` • ${e.time}` : ""}</div>
               {e.executor && <div className="text-xs text-muted-foreground">المحور: {e.executor}</div>}
               <div className="text-sm mt-1">العدد: <b>{e.count}</b></div>
               {e.notes && <div className="text-xs text-muted-foreground mt-1">{e.notes}</div>}
@@ -277,6 +298,7 @@ function ShellsTab() {
             <div className="grid grid-cols-2 gap-2">
               <div><Label className="mb-1 block">العدد</Label><Input type="number" value={editing.count} onChange={(e) => setEditing({ ...editing, count: Number(e.target.value) })} /></div>
               <div><Label className="mb-1 block">التاريخ</Label><Input type="date" value={editing.date} onChange={(e) => setEditing({ ...editing, date: e.target.value })} /></div>
+              <div className="col-span-2"><Label className="mb-1 block">وقت السحب</Label><Input type="time" value={editing.time || ""} onChange={(e) => setEditing({ ...editing, time: e.target.value })} /></div>
             </div>
             <div><Label className="mb-1 block">ملاحظات</Label><Textarea value={editing.notes || ""} onChange={(e) => setEditing({ ...editing, notes: e.target.value })} rows={2} /></div>
             <div className="flex gap-2">

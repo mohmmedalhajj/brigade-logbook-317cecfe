@@ -16,6 +16,7 @@ export interface FuelEntry {
   monthlyAllowance: number;
   withdrawn: number;
   date: string;
+  time?: string;
   month: string;
   executor?: string;
   notes?: string;
@@ -26,6 +27,7 @@ export interface ShellEntry {
   type: "هاون 82" | "هاون 60" | "MK40";
   count: number;
   date: string;
+  time?: string;
   executor?: string;
   notes?: string;
 }
