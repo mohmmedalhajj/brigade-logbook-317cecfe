@@ -117,7 +117,7 @@ function FuelTab() {
         ["المسحوب", `${e.withdrawn} لتر`],
         ["المتبقي", `${r ? r.remaining : e.monthlyAllowance - e.withdrawn} لتر`],
         ["التاريخ", e.date],
-        ["وقت السحب", e.time || ""],
+        ["وقت السحب", formatTimeAr(e.time)],
         ["الشهر", e.month],
         ["ملاحظات", e.notes],
       ]),
@@ -152,7 +152,7 @@ function FuelTab() {
           <div className="flex justify-between items-start">
             <div>
               <div className="font-bold text-gold">{e.type}</div>
-              <div className="text-xs text-muted-foreground mt-1">{e.date}{e.time ? ` • ${e.time}` : ""} • {e.month}</div>
+              <div className="text-xs text-muted-foreground mt-1">{e.date}{e.time ? ` • ${formatTimeAr(e.time)}` : ""} • {e.month}</div>
               {e.executor && <div className="text-xs text-muted-foreground">المحور: {e.executor}</div>}
               <div className="text-sm mt-2">
                 المخصص: <b>{e.monthlyAllowance} لتر</b> | المسحوب: <b>{e.withdrawn} لتر</b> | المتبقي: <b className="text-gold">{remainingForGroup} لتر</b>
@@ -249,7 +249,7 @@ function ShellsTab() {
   async function exportPdf(e: ShellEntry) {
     await exportPDF({
       title: "تقرير قذائف",
-      bodyHtml: htmlKV([["النوع", e.type], ["المحور", e.executor || ""], ["العدد", e.count], ["التاريخ", e.date], ["وقت السحب", e.time || ""], ["ملاحظات", e.notes]]),
+      bodyHtml: htmlKV([["النوع", e.type], ["المحور", e.executor || ""], ["العدد", e.count], ["التاريخ", e.date], ["وقت السحب", formatTimeAr(e.time)], ["ملاحظات", e.notes]]),
       filename: `shells-${e.id}.pdf`,
     });
   }
@@ -262,7 +262,7 @@ function ShellsTab() {
           <div className="flex justify-between items-start">
             <div>
               <div className="font-bold text-gold">{e.type}</div>
-              <div className="text-xs text-muted-foreground">{e.date}{e.time ? ` • ${e.time}` : ""}</div>
+              <div className="text-xs text-muted-foreground">{e.date}{e.time ? ` • ${formatTimeAr(e.time)}` : ""}</div>
               {e.executor && <div className="text-xs text-muted-foreground">المحور: {e.executor}</div>}
               <div className="text-sm mt-1">العدد: <b>{e.count}</b></div>
               {e.notes && <div className="text-xs text-muted-foreground mt-1">{e.notes}</div>}
