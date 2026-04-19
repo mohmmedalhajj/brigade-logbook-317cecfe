@@ -273,6 +273,7 @@ function BackupTab() {
   const [restorePwd, setRestorePwd] = useState("");
   const [showRestorePwd, setShowRestorePwd] = useState(false);
   const [msg, setMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [delBackupId, setDelBackupId] = useState<string | null>(null);
 
   async function load() {
     const all = await getAll<Backup>("backups");
