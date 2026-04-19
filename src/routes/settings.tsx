@@ -388,11 +388,37 @@ function BackupTab() {
                 <div className="font-bold">{b.name}</div>
                 <div className="text-xs text-muted-foreground">{new Date(b.createdAt).toLocaleString("ar-EG")}</div>
               </div>
-              <Button size="sm" variant="destructive" onClick={async () => { await del("backups", b.id); load(); }}><Trash2 className="w-3 h-3" /></Button>
+              <Button size="sm" variant="destructive" onClick={() => setDelBackupId(b.id)}><Trash2 className="w-3 h-3" /></Button>
             </div>
           ))}
         </div>
       )}
+
+      <AlertDialog open={!!delBackupId} onOpenChange={(o) => !o && setDelBackupId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>تأكيد حذف النسخة الاحتياطية</AlertDialogTitle>
+            <AlertDialogDescription>
+              هل أنت متأكد من حذف هذه النسخة الاحتياطية؟ لا يمكن التراجع عن هذا الإجراء.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive"
+              onClick={async () => {
+                if (delBackupId) {
+                  await del("backups", delBackupId);
+                  setDelBackupId(null);
+                  load();
+                }
+              }}
+            >
+              حذف
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
