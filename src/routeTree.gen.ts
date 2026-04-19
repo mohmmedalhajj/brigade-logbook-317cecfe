@@ -9,15 +9,33 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as StatsRouteImport } from './routes/stats'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as CustodyRouteImport } from './routes/custody'
+import { Route as AllocationsRouteImport } from './routes/allocations'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MissionsIndexRouteImport } from './routes/missions.index'
 import { Route as MissionsNewRouteImport } from './routes/missions.new'
 import { Route as MissionsIdRouteImport } from './routes/missions.$id'
 
+const StatsRoute = StatsRouteImport.update({
+  id: '/stats',
+  path: '/stats',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CustodyRoute = CustodyRouteImport.update({
+  id: '/custody',
+  path: '/custody',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AllocationsRoute = AllocationsRouteImport.update({
+  id: '/allocations',
+  path: '/allocations',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -43,14 +61,20 @@ const MissionsIdRoute = MissionsIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/allocations': typeof AllocationsRoute
+  '/custody': typeof CustodyRoute
   '/login': typeof LoginRoute
+  '/stats': typeof StatsRoute
   '/missions/$id': typeof MissionsIdRoute
   '/missions/new': typeof MissionsNewRoute
   '/missions/': typeof MissionsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/allocations': typeof AllocationsRoute
+  '/custody': typeof CustodyRoute
   '/login': typeof LoginRoute
+  '/stats': typeof StatsRoute
   '/missions/$id': typeof MissionsIdRoute
   '/missions/new': typeof MissionsNewRoute
   '/missions': typeof MissionsIndexRoute
@@ -58,20 +82,42 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/allocations': typeof AllocationsRoute
+  '/custody': typeof CustodyRoute
   '/login': typeof LoginRoute
+  '/stats': typeof StatsRoute
   '/missions/$id': typeof MissionsIdRoute
   '/missions/new': typeof MissionsNewRoute
   '/missions/': typeof MissionsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/missions/$id' | '/missions/new' | '/missions/'
+  fullPaths:
+    | '/'
+    | '/allocations'
+    | '/custody'
+    | '/login'
+    | '/stats'
+    | '/missions/$id'
+    | '/missions/new'
+    | '/missions/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/missions/$id' | '/missions/new' | '/missions'
+  to:
+    | '/'
+    | '/allocations'
+    | '/custody'
+    | '/login'
+    | '/stats'
+    | '/missions/$id'
+    | '/missions/new'
+    | '/missions'
   id:
     | '__root__'
     | '/'
+    | '/allocations'
+    | '/custody'
     | '/login'
+    | '/stats'
     | '/missions/$id'
     | '/missions/new'
     | '/missions/'
@@ -79,7 +125,10 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AllocationsRoute: typeof AllocationsRoute
+  CustodyRoute: typeof CustodyRoute
   LoginRoute: typeof LoginRoute
+  StatsRoute: typeof StatsRoute
   MissionsIdRoute: typeof MissionsIdRoute
   MissionsNewRoute: typeof MissionsNewRoute
   MissionsIndexRoute: typeof MissionsIndexRoute
@@ -87,11 +136,32 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/stats': {
+      id: '/stats'
+      path: '/stats'
+      fullPath: '/stats'
+      preLoaderRoute: typeof StatsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/custody': {
+      id: '/custody'
+      path: '/custody'
+      fullPath: '/custody'
+      preLoaderRoute: typeof CustodyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/allocations': {
+      id: '/allocations'
+      path: '/allocations'
+      fullPath: '/allocations'
+      preLoaderRoute: typeof AllocationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -127,7 +197,10 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AllocationsRoute: AllocationsRoute,
+  CustodyRoute: CustodyRoute,
   LoginRoute: LoginRoute,
+  StatsRoute: StatsRoute,
   MissionsIdRoute: MissionsIdRoute,
   MissionsNewRoute: MissionsNewRoute,
   MissionsIndexRoute: MissionsIndexRoute,
