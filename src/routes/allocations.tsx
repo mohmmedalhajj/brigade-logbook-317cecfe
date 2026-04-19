@@ -121,7 +121,7 @@ function FuelTab() {
         ["الشهر", e.month],
         ["ملاحظات", e.notes],
       ]),
-      filename: `fuel-${e.id}.pdf`,
+      filename: `محروقات-${e.executor || ""}-${e.date}.pdf`,
     });
   }
 
@@ -250,7 +250,7 @@ function ShellsTab() {
     await exportPDF({
       title: "تقرير قذائف",
       bodyHtml: htmlKV([["النوع", e.type], ["المحور", e.executor || ""], ["العدد", e.count], ["التاريخ", e.date], ["وقت السحب", formatTimeAr(e.time)], ["ملاحظات", e.notes]]),
-      filename: `shells-${e.id}.pdf`,
+      filename: `قذائف-${e.executor || ""}-${e.date}.pdf`,
     });
   }
 
@@ -381,7 +381,7 @@ function StatsTab() {
       `<h3 style="color:#2d4a2d;">سجلات القذائف التفصيلية</h3>` +
       htmlTable(["النوع", "المحور", "العدد", "التاريخ", "الوقت", "ملاحظات"],
         s.map((x) => [x.type, x.executor || "—", x.count, x.date, formatTimeAr(x.time), x.notes || ""]));
-    await exportPDF({ title: `تقرير المخصصات الشهري - ${month}`, bodyHtml: body, filename: `allocations-${month}.pdf` });
+    await exportPDF({ title: `تقرير المخصصات الشهري - ${month}`, bodyHtml: body, filename: `تقرير-المخصصات-${month}.pdf` });
   }
 
   return (

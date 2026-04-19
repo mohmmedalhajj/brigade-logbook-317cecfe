@@ -46,7 +46,7 @@ function Custody() {
       `<h3 style="color:#2d4a2d;">تفاصيل العهدة</h3>` +
       `<div style="border:1px solid #cfd8cf; padding:10px; white-space:pre-wrap;">${htmlEscape(e.text)}</div>` +
       (e.image ? `<div style="margin-top:12px;"><img src="${e.image}" style="max-width:100%; border:1px solid #cfd8cf;" /></div>` : "");
-    await exportPDF({ title: `عهدة رقم ${e.number}`, bodyHtml: body, filename: `custody-${e.number}.pdf` });
+    await exportPDF({ title: `عهدة رقم ${e.number}`, bodyHtml: body, filename: `عهدة-${e.number}.pdf` });
   }
 
   return (
