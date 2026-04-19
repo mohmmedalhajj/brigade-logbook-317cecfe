@@ -178,6 +178,7 @@ export function generateFuelWA(entry: any): string {
     line("المسحوب", `${entry.withdrawn} لتر`),
     line("المتبقي", `${entry.monthlyAllowance - entry.withdrawn} لتر`),
     line("التاريخ", entry.date),
+    line("وقت السحب", entry.time),
     line("ملاحظات", entry.notes),
     FOOTER,
   ].filter(Boolean).join("\n");
@@ -193,6 +194,7 @@ export function generateShellWA(entry: any): string {
     line("النوع", entry.type),
     line("العدد", entry.count),
     line("التاريخ", entry.date),
+    line("وقت السحب", entry.time),
     line("ملاحظات", entry.notes),
     FOOTER,
   ].filter(Boolean).join("\n");
