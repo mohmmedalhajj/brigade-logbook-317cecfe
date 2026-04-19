@@ -162,10 +162,15 @@ export async function missionToPDF(m: MissionBase, executorName: string) {
     );
   }
 
+  // Build Arabic filename: "<اسم المهمة> - رقم <missionNumber>.pdf"
+  const missionTypeName = title.replace(/^تقرير\s+/, "").trim();
+  const missionNum = d.missionNumber || m.id;
+  const filename = `${missionTypeName} - رقم ${missionNum}.pdf`;
+
   await exportPDF({
     title,
     subtitle: `رقم المهمة: ${d.missionNumber || ""}`,
     bodyHtml: body,
-    filename: `مهمة-${d.missionNumber || m.id}.pdf`,
+    filename,
   });
 }

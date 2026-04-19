@@ -22,11 +22,12 @@ export const Route = createFileRoute("/settings")({
 
 function Settings() {
   const nav = useNavigate();
+  const [confirmLogout, setConfirmLogout] = useState(false);
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h1 className="text-xl font-bold text-gold">الإعدادات</h1>
-        <Button variant="destructive" size="sm" onClick={() => { logout(); nav({ to: "/login" }); }} className="gap-1">
+        <Button variant="destructive" size="sm" onClick={() => setConfirmLogout(true)} className="gap-1">
           <LogOut className="w-3 h-3" /> خروج
         </Button>
       </div>
@@ -40,6 +41,19 @@ function Settings() {
         <TabsContent value="executors"><ExecutorsTab /></TabsContent>
         <TabsContent value="backup"><BackupTab /></TabsContent>
       </Tabs>
+
+      <AlertDialog open={confirmLogout} onOpenChange={setConfirmLogout}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>تأكيد تسجيل الخروج</AlertDialogTitle>
+            <AlertDialogDescription>هل أنت متأكد من تسجيل الخروج من الحساب؟</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction className="bg-destructive" onClick={() => { logout(); nav({ to: "/login" }); }}>تسجيل الخروج</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -259,6 +273,7 @@ function BackupTab() {
   const [restorePwd, setRestorePwd] = useState("");
   const [showRestorePwd, setShowRestorePwd] = useState(false);
   const [msg, setMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [delBackupId, setDelBackupId] = useState<string | null>(null);
 
   async function load() {
     const all = await getAll<Backup>("backups");
@@ -373,11 +388,37 @@ function BackupTab() {
                 <div className="font-bold">{b.name}</div>
                 <div className="text-xs text-muted-foreground">{new Date(b.createdAt).toLocaleString("ar-EG")}</div>
               </div>
-              <Button size="sm" variant="destructive" onClick={async () => { await del("backups", b.id); load(); }}><Trash2 className="w-3 h-3" /></Button>
+              <Button size="sm" variant="destructive" onClick={() => setDelBackupId(b.id)}><Trash2 className="w-3 h-3" /></Button>
             </div>
           ))}
         </div>
       )}
+
+      <AlertDialog open={!!delBackupId} onOpenChange={(o) => !o && setDelBackupId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>تأكيد حذف النسخة الاحتياطية</AlertDialogTitle>
+            <AlertDialogDescription>
+              هل أنت متأكد من حذف هذه النسخة الاحتياطية؟ لا يمكن التراجع عن هذا الإجراء.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive"
+              onClick={async () => {
+                if (delBackupId) {
+                  await del("backups", delBackupId);
+                  setDelBackupId(null);
+                  load();
+                }
+              }}
+            >
+              حذف
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
