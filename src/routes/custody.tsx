@@ -64,6 +64,7 @@ function Custody() {
             <div className="flex-1 min-w-0">
               <div className="font-bold text-gold">عهدة #{e.number}</div>
               <div className="text-xs text-muted-foreground">تسليم: {e.deliveryDate}</div>
+              {e.executor && <div className="text-xs text-muted-foreground">المحور: {e.executor}</div>}
               <div className="text-sm mt-2 whitespace-pre-wrap break-words">{e.text}</div>
             </div>
             {e.image && <img src={e.image} alt="عهدة" className="w-20 h-20 object-cover rounded-lg border border-border" />}
@@ -76,7 +77,7 @@ function Custody() {
         </div>
       ))}
 
-      {editing && <CustodyEditor entry={editing} onSave={save} onCancel={() => setEditing(null)} />}
+      {editing && <CustodyEditor entry={editing} executors={executors} onSave={save} onCancel={() => setEditing(null)} />}
 
       <AlertDialog open={!!delId} onOpenChange={(o) => !o && setDelId(null)}>
         <AlertDialogContent>
@@ -91,7 +92,7 @@ function Custody() {
   );
 }
 
-function CustodyEditor({ entry, onSave, onCancel }: { entry: CustodyEntry; onSave: (e: CustodyEntry) => void; onCancel: () => void }) {
+function CustodyEditor({ entry, executors, onSave, onCancel }: { entry: CustodyEntry; executors: Executor[]; onSave: (e: CustodyEntry) => void; onCancel: () => void }) {
   const [e, setE] = useState<CustodyEntry>(entry);
 
   function onFile(file: File) {
@@ -104,6 +105,13 @@ function CustodyEditor({ entry, onSave, onCancel }: { entry: CustodyEntry; onSav
     <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-4 overflow-auto">
       <div className="military-card rounded-xl p-4 w-full max-w-md space-y-3 my-4">
         <h3 className="font-bold text-gold">عهدة #{e.number}</h3>
+        <div>
+          <Label className="mb-1 block">المحور</Label>
+          <Select value={e.executor || ""} onValueChange={(v) => setE({ ...e, executor: v })}>
+            <SelectTrigger><SelectValue placeholder="اختر المحور..." /></SelectTrigger>
+            <SelectContent>{executors.map((x) => <SelectItem key={x.id} value={x.name}>{x.name}</SelectItem>)}</SelectContent>
+          </Select>
+        </div>
         <div><Label className="mb-1 block">النص</Label><Textarea value={e.text} onChange={(ev) => setE({ ...e, text: ev.target.value })} rows={5} /></div>
         <div><Label className="mb-1 block">تاريخ التسليم</Label><Input type="date" value={e.deliveryDate} onChange={(ev) => setE({ ...e, deliveryDate: ev.target.value })} /></div>
         <div>
