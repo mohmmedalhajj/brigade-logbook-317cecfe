@@ -174,7 +174,33 @@ export function MissionForm({ existingId, initialType }: Props) {
         {data.missionNumber ? "✓ يتم الحفظ التلقائي" : "أدخل رقم المهمة لبدء الحفظ التلقائي"}
       </div>
 
-      <Button onClick={() => nav({ to: "/missions" })} className="w-full bg-primary">رجوع للقائمة</Button>
+      <Button
+        onClick={async () => {
+          if (!data.missionNumber) {
+            toast.error("رقم المهمة مطلوب قبل الحفظ");
+            return;
+          }
+          const id = missionId || uid();
+          const finalData = typeId === "strike" ? { ...data, targets } : data;
+          const obj: MissionBase = {
+            id,
+            type: typeId,
+            missionNumber: String(data.missionNumber || ""),
+            date: data.date || todayISO(),
+            createdAt: Date.now(),
+            executor,
+            data: finalData,
+          };
+          await put("missions", obj);
+          if (!missionId) setMissionId(id);
+          toast.success("تم حفظ المهمة");
+        }}
+        className="w-full bg-primary gap-2"
+      >
+        <Save className="w-4 h-4" /> حفظ المهمة
+      </Button>
+
+      <Button onClick={() => nav({ to: "/missions" })} variant="secondary" className="w-full">رجوع للقائمة</Button>
     </div>
   );
 }
