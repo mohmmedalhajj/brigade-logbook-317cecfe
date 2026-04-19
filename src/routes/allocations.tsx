@@ -243,12 +243,12 @@ function ShellsTab() {
   }
   useEffect(() => { load(); }, []);
 
-  function empty(): ShellEntry { return { id: uid(), type: "هاون 82", count: 0, date: todayISO(), executor: executors[0]?.name || "", notes: "" }; }
+  function empty(): ShellEntry { return { id: uid(), type: "هاون 82", count: 0, date: todayISO(), time: currentTime(), executor: executors[0]?.name || "", notes: "" }; }
   async function save(e: ShellEntry) { await put("shells", e); setEditing(null); load(); }
   async function exportPdf(e: ShellEntry) {
     await exportPDF({
       title: "تقرير قذائف",
-      bodyHtml: htmlKV([["النوع", e.type], ["المحور", e.executor || ""], ["العدد", e.count], ["التاريخ", e.date], ["ملاحظات", e.notes]]),
+      bodyHtml: htmlKV([["النوع", e.type], ["المحور", e.executor || ""], ["العدد", e.count], ["التاريخ", e.date], ["وقت السحب", e.time || ""], ["ملاحظات", e.notes]]),
       filename: `shells-${e.id}.pdf`,
     });
   }
@@ -261,7 +261,7 @@ function ShellsTab() {
           <div className="flex justify-between items-start">
             <div>
               <div className="font-bold text-gold">{e.type}</div>
-              <div className="text-xs text-muted-foreground">{e.date}</div>
+              <div className="text-xs text-muted-foreground">{e.date}{e.time ? ` • ${e.time}` : ""}</div>
               {e.executor && <div className="text-xs text-muted-foreground">المحور: {e.executor}</div>}
               <div className="text-sm mt-1">العدد: <b>{e.count}</b></div>
               {e.notes && <div className="text-xs text-muted-foreground mt-1">{e.notes}</div>}
@@ -298,6 +298,7 @@ function ShellsTab() {
             <div className="grid grid-cols-2 gap-2">
               <div><Label className="mb-1 block">العدد</Label><Input type="number" value={editing.count} onChange={(e) => setEditing({ ...editing, count: Number(e.target.value) })} /></div>
               <div><Label className="mb-1 block">التاريخ</Label><Input type="date" value={editing.date} onChange={(e) => setEditing({ ...editing, date: e.target.value })} /></div>
+              <div className="col-span-2"><Label className="mb-1 block">وقت السحب</Label><Input type="time" value={editing.time || ""} onChange={(e) => setEditing({ ...editing, time: e.target.value })} /></div>
             </div>
             <div><Label className="mb-1 block">ملاحظات</Label><Textarea value={editing.notes || ""} onChange={(e) => setEditing({ ...editing, notes: e.target.value })} rows={2} /></div>
             <div className="flex gap-2">
