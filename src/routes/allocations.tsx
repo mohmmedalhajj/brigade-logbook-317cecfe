@@ -96,6 +96,7 @@ function FuelTab() {
       title: "تقرير محروقات",
       bodyHtml: htmlKV([
         ["النوع", e.type],
+        ["المحور", e.executor || ""],
         ["الاستحقاق الشهري", e.monthlyAllowance],
         ["المسحوب", e.withdrawn],
         ["المتبقي", e.monthlyAllowance - e.withdrawn],
@@ -226,7 +227,7 @@ function ShellsTab() {
   async function exportPdf(e: ShellEntry) {
     await exportPDF({
       title: "تقرير قذائف",
-      bodyHtml: htmlKV([["النوع", e.type], ["العدد", e.count], ["التاريخ", e.date], ["ملاحظات", e.notes]]),
+      bodyHtml: htmlKV([["النوع", e.type], ["المحور", e.executor || ""], ["العدد", e.count], ["التاريخ", e.date], ["ملاحظات", e.notes]]),
       filename: `shells-${e.id}.pdf`,
     });
   }
