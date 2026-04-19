@@ -120,7 +120,11 @@ function MissionsList() {
                 <Button size="sm" variant="secondary" className="gap-1"><Pencil className="w-3 h-3" /> تعديل</Button>
               </Link>
               <Button size="sm" variant="secondary" className="gap-1"
-                onClick={() => shareWhatsApp(generateWhatsApp(m, m.executor || ""))}>
+                onClick={() => {
+                  const t = types.find((x) => x.id === m.type);
+                  const enriched: any = { ...m, typeFields: t?.fields, typeName: t?.name };
+                  shareWhatsApp(generateWhatsApp(enriched, m.executor || ""));
+                }}>
                 <Share2 className="w-3 h-3" /> واتساب
               </Button>
               <Button size="sm" variant="secondary" className="gap-1"

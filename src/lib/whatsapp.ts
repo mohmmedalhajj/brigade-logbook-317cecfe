@@ -135,18 +135,35 @@ export function generateWhatsApp(mission: MissionBase, executorName: string): st
     ].join("\n");
   }
 
-  // Custom type - generic
-  return [
+  // Custom type - generic (use Arabic labels from mission type definition)
+  const fields: { key: string; label: string }[] = Array.isArray((mission as any).typeFields)
+    ? (mission as any).typeFields
+    : [];
+  const typeName = (mission as any).typeName || "";
+
+  const lines = [
     HEADER,
     executor,
-    `الموضوع تقرير مهمة`,
+    `الموضوع تقرير ${typeName || "مهمة"}`,
     "",
-    line("رقم المهمة", d.missionNumber),
-    ...Object.entries(d)
-      .filter(([k]) => k !== "missionNumber")
-      .map(([k, v]) => line(k, v)),
-    FOOTER,
-  ].join("\n");
+    "تفاصيل المهمة",
+  ];
+
+  if (fields.length > 0) {
+    for (const f of fields) {
+      lines.push(line(f.label, d[f.key]));
+    }
+  } else {
+    // Fallback: show raw keys if no field metadata is available
+    lines.push(line("رقم المهمة", d.missionNumber));
+    for (const [k, v] of Object.entries(d)) {
+      if (k === "missionNumber") continue;
+      lines.push(line(k, v));
+    }
+  }
+
+  lines.push("", FOOTER);
+  return lines.join("\n");
 }
 
 export function generateFuelWA(entry: any): string {
