@@ -71,7 +71,7 @@ export async function exportPDF(opts: PDFOptions) {
     doc.write(`<!DOCTYPE html><html dir="rtl"><head><meta charset="utf-8">
       <link rel="preconnect" href="https://fonts.googleapis.com">
       <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-      <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+      <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
       <style>
         *,*::before,*::after{box-sizing:border-box;}
         html,body{margin:0;padding:0;background:#ffffff;color:#111;font-family:"Cairo","Segoe UI",Tahoma,Arial,sans-serif;direction:rtl;}
