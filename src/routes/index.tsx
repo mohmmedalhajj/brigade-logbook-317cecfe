@@ -70,8 +70,15 @@ function Home() {
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <StatCard icon={Crosshair} label="استطلاع" value={missions.filter((m) => m.type === "recon").length} color="bg-military" />
-        <StatCard icon={Radio} label="تشويش" value={missions.filter((m) => m.type === "jamming").length} color="bg-military-dark" />
+        {types.map((t, i) => (
+          <StatCard
+            key={t.id}
+            icon={i % 2 === 0 ? Crosshair : Radio}
+            label={t.name}
+            value={missions.filter((m) => m.type === t.id).length}
+            color={i % 2 === 0 ? "bg-military" : "bg-military-dark"}
+          />
+        ))}
       </div>
 
       <div className="military-card rounded-xl p-4">
