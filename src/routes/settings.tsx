@@ -1,0 +1,383 @@
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { AuthGate } from "@/components/AuthGate";
+import { AppShell } from "@/components/AppShell";
+import { useEffect, useState } from "react";
+import { getAll, put, del, uid, exportAll, importAll, type MissionType, type Executor, type Backup } from "@/lib/db";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Plus, Trash2, Pencil, Eye, EyeOff, LogOut, Download, Upload, Save } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { logout } from "@/lib/auth";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+export const Route = createFileRoute("/settings")({
+  component: () => (<AuthGate><AppShell><Settings /></AppShell></AuthGate>),
+});
+
+function Settings() {
+  const nav = useNavigate();
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h1 className="text-xl font-bold text-gold">الإعدادات</h1>
+        <Button variant="destructive" size="sm" onClick={() => { logout(); nav({ to: "/login" }); }} className="gap-1">
+          <LogOut className="w-3 h-3" /> خروج
+        </Button>
+      </div>
+      <Tabs defaultValue="types">
+        <TabsList className="grid grid-cols-3 w-full">
+          <TabsTrigger value="types">أنواع المهام</TabsTrigger>
+          <TabsTrigger value="executors">الجهة المنفذة</TabsTrigger>
+          <TabsTrigger value="backup">النسخ الاحتياطي</TabsTrigger>
+        </TabsList>
+        <TabsContent value="types"><TypesTab /></TabsContent>
+        <TabsContent value="executors"><ExecutorsTab /></TabsContent>
+        <TabsContent value="backup"><BackupTab /></TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+function TypesTab() {
+  const [items, setItems] = useState<MissionType[]>([]);
+  const [editing, setEditing] = useState<MissionType | null>(null);
+  const [delId, setDelId] = useState<string | null>(null);
+
+  async function load() { setItems(await getAll("missionTypes")); }
+  useEffect(() => { load(); }, []);
+
+  function generateTemplate(t: MissionType): string {
+    const lines = [
+      "بسم الله الرحمن الرحيم",
+      "صقور ل1 مغاوير",
+      "{executor}",
+      `الموضوع تقرير ${t.name}`,
+      "",
+      "تفاصيل المهمة",
+      ...t.fields.map((f) => `${f.label}: {${f.key}}`),
+      ".........إنتهى أخي........",
+    ];
+    return lines.join("\n");
+  }
+
+  function addNew() {
+    setEditing({ id: uid(), name: "نوع جديد", fields: [{ key: "missionNumber", label: "رقم المهمة", type: "text" }, { key: "date", label: "التاريخ", type: "date" }], whatsappTemplate: "" });
+  }
+
+  async function save(t: MissionType) {
+    const final = { ...t, whatsappTemplate: t.whatsappTemplate || generateTemplate(t) };
+    await put("missionTypes", final);
+    setEditing(null);
+    load();
+  }
+
+  return (
+    <div className="space-y-3">
+      <Button onClick={addNew} className="gap-1 bg-primary"><Plus className="w-4 h-4" /> نوع جديد</Button>
+      {items.map((t) => (
+        <div key={t.id} className="military-card rounded-xl p-4">
+          <div className="flex justify-between items-start">
+            <div>
+              <div className="font-bold text-gold">{t.name}</div>
+              <div className="text-xs text-muted-foreground mt-1">{t.fields.length} حقل {t.builtin && "• مدمج"}</div>
+            </div>
+            <div className="flex gap-1">
+              <Button size="sm" variant="secondary" onClick={() => setEditing(t)}><Pencil className="w-3 h-3" /></Button>
+              {!t.builtin && <Button size="sm" variant="destructive" onClick={() => setDelId(t.id)}><Trash2 className="w-3 h-3" /></Button>}
+            </div>
+          </div>
+        </div>
+      ))}
+
+      {editing && <TypeEditor type={editing} onSave={save} onCancel={() => setEditing(null)} generateTemplate={generateTemplate} />}
+
+      <AlertDialog open={!!delId} onOpenChange={(o) => !o && setDelId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader><AlertDialogTitle>حذف</AlertDialogTitle><AlertDialogDescription>هل أنت متأكد؟</AlertDialogDescription></AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction className="bg-destructive" onClick={async () => { if (delId) { await del("missionTypes", delId); setDelId(null); load(); }}}>حذف</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
+
+function TypeEditor({ type, onSave, onCancel, generateTemplate }: { type: MissionType; onSave: (t: MissionType) => void; onCancel: () => void; generateTemplate: (t: MissionType) => string }) {
+  const [t, setT] = useState<MissionType>(type);
+
+  function addField() {
+    setT({ ...t, fields: [...t.fields, { key: `field_${t.fields.length + 1}`, label: "حقل جديد", type: "text" }] });
+  }
+  function updateField(i: number, k: string, v: any) {
+    setT({ ...t, fields: t.fields.map((f, idx) => idx === i ? { ...f, [k]: v } : f) });
+  }
+  function removeField(i: number) {
+    setT({ ...t, fields: t.fields.filter((_, idx) => idx !== i) });
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-4 overflow-auto">
+      <div className="military-card rounded-xl p-4 w-full max-w-lg space-y-3 my-4 max-h-[90vh] overflow-auto">
+        <h3 className="font-bold text-gold">تعديل نوع</h3>
+        <div><Label className="mb-1 block">الاسم</Label><Input value={t.name} onChange={(e) => setT({ ...t, name: e.target.value })} disabled={t.builtin} /></div>
+        <div>
+          <div className="flex justify-between items-center mb-2"><Label>الحقول</Label>{!t.builtin && <Button size="sm" onClick={addField}><Plus className="w-3 h-3" /></Button>}</div>
+          <div className="space-y-2">
+            {t.fields.map((f, i) => (
+              <div key={i} className="grid grid-cols-12 gap-1 items-center">
+                <Input className="col-span-4" placeholder="مفتاح" value={f.key} onChange={(e) => updateField(i, "key", e.target.value)} disabled={t.builtin} />
+                <Input className="col-span-4" placeholder="التسمية" value={f.label} onChange={(e) => updateField(i, "label", e.target.value)} disabled={t.builtin} />
+                <Select value={f.type} onValueChange={(v) => updateField(i, "type", v)} disabled={t.builtin}>
+                  <SelectTrigger className="col-span-3"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="text">نص</SelectItem>
+                    <SelectItem value="textarea">نص طويل</SelectItem>
+                    <SelectItem value="number">رقم</SelectItem>
+                    <SelectItem value="date">تاريخ</SelectItem>
+                    <SelectItem value="time">وقت</SelectItem>
+                  </SelectContent>
+                </Select>
+                {!t.builtin && <Button size="sm" variant="destructive" className="col-span-1" onClick={() => removeField(i)}><Trash2 className="w-3 h-3" /></Button>}
+              </div>
+            ))}
+          </div>
+        </div>
+        <div>
+          <div className="flex justify-between items-center mb-1">
+            <Label>قالب الواتساب</Label>
+            <Button size="sm" variant="secondary" onClick={() => setT({ ...t, whatsappTemplate: generateTemplate(t) })}>توليد تلقائي</Button>
+          </div>
+          <Textarea value={t.whatsappTemplate} onChange={(e) => setT({ ...t, whatsappTemplate: e.target.value })} rows={6} />
+        </div>
+        <div className="flex gap-2">
+          <Button className="flex-1 bg-primary" onClick={() => onSave(t)}>حفظ</Button>
+          <Button variant="secondary" onClick={onCancel}>إلغاء</Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ExecutorsTab() {
+  const [items, setItems] = useState<Executor[]>([]);
+  const [name, setName] = useState("");
+  const [delId, setDelId] = useState<string | null>(null);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+
+  async function load() { setItems(await getAll("executors")); }
+  useEffect(() => { load(); }, []);
+
+  async function add() {
+    if (!name.trim()) return;
+    await put("executors", { id: uid(), name: name.trim() });
+    setName("");
+    load();
+  }
+  async function saveEdit() {
+    if (!editId) return;
+    const item = items.find((i) => i.id === editId);
+    if (!item) return;
+    await put("executors", { ...item, name: editName.trim() });
+    setEditId(null);
+    load();
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex gap-2">
+        <Input placeholder="اسم الجهة المنفذة" value={name} onChange={(e) => setName(e.target.value)} />
+        <Button onClick={add} className="bg-primary"><Plus className="w-4 h-4" /></Button>
+      </div>
+      {items.map((e) => (
+        <div key={e.id} className="military-card rounded-xl p-3 flex justify-between items-center">
+          {editId === e.id ? (
+            <>
+              <Input value={editName} onChange={(ev) => setEditName(ev.target.value)} className="ml-2" />
+              <div className="flex gap-1">
+                <Button size="sm" onClick={saveEdit} className="bg-primary">حفظ</Button>
+                <Button size="sm" variant="secondary" onClick={() => setEditId(null)}>إلغاء</Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <span>{e.name} {e.builtin && <span className="text-xs text-muted-foreground">(مدمج)</span>}</span>
+              <div className="flex gap-1">
+                <Button size="sm" variant="secondary" onClick={() => { setEditId(e.id); setEditName(e.name); }}><Pencil className="w-3 h-3" /></Button>
+                {!e.builtin && <Button size="sm" variant="destructive" onClick={() => setDelId(e.id)}><Trash2 className="w-3 h-3" /></Button>}
+              </div>
+            </>
+          )}
+        </div>
+      ))}
+
+      <AlertDialog open={!!delId} onOpenChange={(o) => !o && setDelId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader><AlertDialogTitle>حذف</AlertDialogTitle><AlertDialogDescription>هل أنت متأكد؟</AlertDialogDescription></AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction className="bg-destructive" onClick={async () => { if (delId) { await del("executors", delId); setDelId(null); load(); }}}>حذف</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
+
+// Simple XOR-based "encryption" with password
+function xorEncode(text: string, password: string): string {
+  let out = "";
+  for (let i = 0; i < text.length; i++) {
+    out += String.fromCharCode(text.charCodeAt(i) ^ password.charCodeAt(i % password.length));
+  }
+  return btoa(unescape(encodeURIComponent(out)));
+}
+function xorDecode(encoded: string, password: string): string {
+  const text = decodeURIComponent(escape(atob(encoded)));
+  let out = "";
+  for (let i = 0; i < text.length; i++) {
+    out += String.fromCharCode(text.charCodeAt(i) ^ password.charCodeAt(i % password.length));
+  }
+  return out;
+}
+
+function BackupTab() {
+  const [backups, setBackups] = useState<Backup[]>([]);
+  const [name, setName] = useState("");
+  const [pwd, setPwd] = useState("");
+  const [pwd2, setPwd2] = useState("");
+  const [showPwd, setShowPwd] = useState(false);
+  const [restoreName, setRestoreName] = useState("");
+  const [restorePwd, setRestorePwd] = useState("");
+  const [showRestorePwd, setShowRestorePwd] = useState(false);
+  const [msg, setMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  async function load() {
+    const all = await getAll<Backup>("backups");
+    all.sort((a, b) => b.createdAt - a.createdAt);
+    setBackups(all);
+  }
+  useEffect(() => { load(); }, []);
+
+  async function createBackup() {
+    setMsg(null);
+    if (!name.trim()) return setMsg({ type: "error", text: "اسم النسخة مطلوب" });
+    if (!pwd) return setMsg({ type: "error", text: "كلمة المرور مطلوبة" });
+    if (pwd !== pwd2) return setMsg({ type: "error", text: "كلمتا المرور غير متطابقتين" });
+    const data = await exportAll();
+    const encoded = xorEncode(JSON.stringify(data), pwd);
+    const fileName = `${name.trim()}-${Date.now()}.bak`;
+    const backup: Backup = { id: uid(), name: name.trim(), password: xorEncode(pwd, "soqour-key"), data: encoded, createdAt: Date.now() };
+    await put("backups", backup);
+
+    // Also download as file
+    const blob = new Blob([encoded], { type: "application/octet-stream" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = fileName; a.click();
+    URL.revokeObjectURL(url);
+
+    setMsg({ type: "success", text: `تم إنشاء النسخة: ${fileName}` });
+    setName(""); setPwd(""); setPwd2("");
+    load();
+  }
+
+  async function restoreBackup() {
+    setMsg(null);
+    const b = backups.find((x) => x.name === restoreName.trim());
+    if (!b) return setMsg({ type: "error", text: "النسخة غير موجودة" });
+    try {
+      const expectedPwd = xorDecode(b.password, "soqour-key");
+      if (expectedPwd !== restorePwd) return setMsg({ type: "error", text: "كلمة المرور غير صحيحة" });
+      const decoded = xorDecode(b.data, restorePwd);
+      const parsed = JSON.parse(decoded);
+      await importAll(parsed);
+      setMsg({ type: "success", text: `تمت الاستعادة بنجاح من النسخة "${b.name}"` });
+      setRestoreName(""); setRestorePwd("");
+    } catch {
+      setMsg({ type: "error", text: "فشل التحقق أو فك التشفير" });
+    }
+  }
+
+  async function importFromFile(file: File, password: string) {
+    setMsg(null);
+    if (!password) return setMsg({ type: "error", text: "كلمة المرور مطلوبة" });
+    const txt = await file.text();
+    try {
+      const decoded = xorDecode(txt, password);
+      const parsed = JSON.parse(decoded);
+      await importAll(parsed);
+      setMsg({ type: "success", text: "تمت الاستعادة من الملف" });
+    } catch {
+      setMsg({ type: "error", text: "ملف غير صالح أو كلمة مرور خاطئة" });
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      {msg && <div className={`p-3 rounded-lg text-sm ${msg.type === "success" ? "bg-primary/20 text-gold border border-primary" : "bg-destructive/20 text-destructive border border-destructive"}`}>{msg.text}</div>}
+
+      <div className="military-card rounded-xl p-4 space-y-3">
+        <h3 className="font-bold text-gold flex items-center gap-2"><Save className="w-4 h-4" /> إنشاء نسخة</h3>
+        <Input placeholder="اسم النسخة" value={name} onChange={(e) => setName(e.target.value)} />
+        <div className="relative">
+          <Input type={showPwd ? "text" : "password"} placeholder="كلمة المرور" value={pwd} onChange={(e) => setPwd(e.target.value)} />
+          <button type="button" onClick={() => setShowPwd((s) => !s)} className="absolute inset-y-0 left-2 flex items-center text-muted-foreground">
+            {showPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          </button>
+        </div>
+        <Input type={showPwd ? "text" : "password"} placeholder="تأكيد كلمة المرور" value={pwd2} onChange={(e) => setPwd2(e.target.value)} />
+        <Button onClick={createBackup} className="w-full bg-primary gap-1"><Download className="w-4 h-4" /> إنشاء وحفظ</Button>
+      </div>
+
+      <div className="military-card rounded-xl p-4 space-y-3">
+        <h3 className="font-bold text-gold flex items-center gap-2"><Upload className="w-4 h-4" /> استعادة من النسخ المخزنة</h3>
+        <Input placeholder="اسم النسخة" value={restoreName} onChange={(e) => setRestoreName(e.target.value)} />
+        <div className="relative">
+          <Input type={showRestorePwd ? "text" : "password"} placeholder="كلمة المرور" value={restorePwd} onChange={(e) => setRestorePwd(e.target.value)} />
+          <button type="button" onClick={() => setShowRestorePwd((s) => !s)} className="absolute inset-y-0 left-2 flex items-center text-muted-foreground">
+            {showRestorePwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          </button>
+        </div>
+        <Button onClick={restoreBackup} className="w-full bg-primary">استعادة</Button>
+      </div>
+
+      <div className="military-card rounded-xl p-4 space-y-3">
+        <h3 className="font-bold text-gold">استعادة من ملف</h3>
+        <Input id="restore-pwd" type="password" placeholder="كلمة مرور الملف" />
+        <label className="block w-full text-center bg-muted/30 border border-dashed border-border rounded-lg p-4 cursor-pointer hover:bg-muted/50">
+          <Upload className="w-4 h-4 inline ml-2" />
+          <span className="text-sm">اختر ملف نسخة احتياطية</span>
+          <input type="file" accept=".bak" className="hidden" onChange={(e) => {
+            const file = e.target.files?.[0];
+            const pwd = (document.getElementById("restore-pwd") as HTMLInputElement)?.value || "";
+            if (file) importFromFile(file, pwd);
+          }} />
+        </label>
+      </div>
+
+      {backups.length > 0 && (
+        <div className="space-y-2">
+          <h3 className="font-bold text-gold">النسخ المخزنة</h3>
+          {backups.map((b) => (
+            <div key={b.id} className="military-card rounded-lg p-3 flex justify-between items-center text-sm">
+              <div>
+                <div className="font-bold">{b.name}</div>
+                <div className="text-xs text-muted-foreground">{new Date(b.createdAt).toLocaleString("ar-EG")}</div>
+              </div>
+              <Button size="sm" variant="destructive" onClick={async () => { await del("backups", b.id); load(); }}><Trash2 className="w-3 h-3" /></Button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

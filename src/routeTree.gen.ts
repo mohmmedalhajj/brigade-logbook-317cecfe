@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as StatsRouteImport } from './routes/stats'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as CustodyRouteImport } from './routes/custody'
 import { Route as AllocationsRouteImport } from './routes/allocations'
@@ -21,6 +22,11 @@ import { Route as MissionsIdRouteImport } from './routes/missions.$id'
 const StatsRoute = StatsRouteImport.update({
   id: '/stats',
   path: '/stats',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -64,6 +70,7 @@ export interface FileRoutesByFullPath {
   '/allocations': typeof AllocationsRoute
   '/custody': typeof CustodyRoute
   '/login': typeof LoginRoute
+  '/settings': typeof SettingsRoute
   '/stats': typeof StatsRoute
   '/missions/$id': typeof MissionsIdRoute
   '/missions/new': typeof MissionsNewRoute
@@ -74,6 +81,7 @@ export interface FileRoutesByTo {
   '/allocations': typeof AllocationsRoute
   '/custody': typeof CustodyRoute
   '/login': typeof LoginRoute
+  '/settings': typeof SettingsRoute
   '/stats': typeof StatsRoute
   '/missions/$id': typeof MissionsIdRoute
   '/missions/new': typeof MissionsNewRoute
@@ -85,6 +93,7 @@ export interface FileRoutesById {
   '/allocations': typeof AllocationsRoute
   '/custody': typeof CustodyRoute
   '/login': typeof LoginRoute
+  '/settings': typeof SettingsRoute
   '/stats': typeof StatsRoute
   '/missions/$id': typeof MissionsIdRoute
   '/missions/new': typeof MissionsNewRoute
@@ -97,6 +106,7 @@ export interface FileRouteTypes {
     | '/allocations'
     | '/custody'
     | '/login'
+    | '/settings'
     | '/stats'
     | '/missions/$id'
     | '/missions/new'
@@ -107,6 +117,7 @@ export interface FileRouteTypes {
     | '/allocations'
     | '/custody'
     | '/login'
+    | '/settings'
     | '/stats'
     | '/missions/$id'
     | '/missions/new'
@@ -117,6 +128,7 @@ export interface FileRouteTypes {
     | '/allocations'
     | '/custody'
     | '/login'
+    | '/settings'
     | '/stats'
     | '/missions/$id'
     | '/missions/new'
@@ -128,6 +140,7 @@ export interface RootRouteChildren {
   AllocationsRoute: typeof AllocationsRoute
   CustodyRoute: typeof CustodyRoute
   LoginRoute: typeof LoginRoute
+  SettingsRoute: typeof SettingsRoute
   StatsRoute: typeof StatsRoute
   MissionsIdRoute: typeof MissionsIdRoute
   MissionsNewRoute: typeof MissionsNewRoute
@@ -141,6 +154,13 @@ declare module '@tanstack/react-router' {
       path: '/stats'
       fullPath: '/stats'
       preLoaderRoute: typeof StatsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -200,6 +220,7 @@ const rootRouteChildren: RootRouteChildren = {
   AllocationsRoute: AllocationsRoute,
   CustodyRoute: CustodyRoute,
   LoginRoute: LoginRoute,
+  SettingsRoute: SettingsRoute,
   StatsRoute: StatsRoute,
   MissionsIdRoute: MissionsIdRoute,
   MissionsNewRoute: MissionsNewRoute,
