@@ -15,6 +15,7 @@ import {
 import { Plus, Pencil, Trash2, Share2, FileDown, Search } from "lucide-react";
 import { generateWhatsApp, shareWhatsApp } from "@/lib/whatsapp";
 import { missionToPDF } from "@/lib/missionPdf";
+import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -128,7 +129,15 @@ function MissionsList() {
                 <Share2 className="w-3 h-3" /> واتساب
               </Button>
               <Button size="sm" variant="secondary" className="gap-1"
-                onClick={() => missionToPDF(m, m.executor || "")}>
+                onClick={async () => {
+                  try {
+                    toast.loading("جاري تجهيز الملف...", { id: `pdf-${m.id}` });
+                    await missionToPDF(m, m.executor || "");
+                    toast.success("تم تصدير PDF", { id: `pdf-${m.id}` });
+                  } catch (e) {
+                    toast.error("فشل تصدير PDF: " + (e instanceof Error ? e.message : "خطأ غير معروف"), { id: `pdf-${m.id}` });
+                  }
+                }}>
                 <FileDown className="w-3 h-3" /> PDF
               </Button>
               <Button size="sm" variant="destructive" className="gap-1" onClick={() => setDelId(m.id)}>
