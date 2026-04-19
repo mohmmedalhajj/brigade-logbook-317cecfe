@@ -106,6 +106,7 @@ function FuelTab() {
   }
 
   async function exportPdf(e: FuelEntry) {
+    const r = groupRemaining(e.type, e.executor || "");
     await exportPDF({
       title: "تقرير محروقات",
       bodyHtml: htmlKV([
@@ -113,8 +114,9 @@ function FuelTab() {
         ["المحور", e.executor || ""],
         ["الاستحقاق الشهري", `${e.monthlyAllowance} لتر`],
         ["المسحوب", `${e.withdrawn} لتر`],
-        ["المتبقي", `${e.monthlyAllowance - e.withdrawn} لتر`],
+        ["المتبقي", `${r ? r.remaining : e.monthlyAllowance - e.withdrawn} لتر`],
         ["التاريخ", e.date],
+        ["وقت السحب", e.time || ""],
         ["الشهر", e.month],
         ["ملاحظات", e.notes],
       ]),
@@ -214,7 +216,8 @@ function FuelEditor({ entry, executors, onSave, onCancel }: { entry: FuelEntry; 
           <div><Label className="mb-1 block">الاستحقاق الشهري (لتر)</Label><Input type="number" value={e.monthlyAllowance} onChange={(ev) => setE({ ...e, monthlyAllowance: Number(ev.target.value) })} /></div>
           <div><Label className="mb-1 block">المسحوب (لتر)</Label><Input type="number" value={e.withdrawn} onChange={(ev) => setE({ ...e, withdrawn: Number(ev.target.value) })} /></div>
           <div><Label className="mb-1 block">التاريخ</Label><Input type="date" value={e.date} onChange={(ev) => setE({ ...e, date: ev.target.value })} /></div>
-          <div><Label className="mb-1 block">الشهر</Label><Input type="month" value={e.month} onChange={(ev) => setE({ ...e, month: ev.target.value })} /></div>
+          <div><Label className="mb-1 block">وقت السحب</Label><Input type="time" value={e.time || ""} onChange={(ev) => setE({ ...e, time: ev.target.value })} /></div>
+          <div className="col-span-2"><Label className="mb-1 block">الشهر</Label><Input type="month" value={e.month} onChange={(ev) => setE({ ...e, month: ev.target.value })} /></div>
         </div>
         <div><Label className="mb-1 block">ملاحظات</Label><Textarea value={e.notes || ""} onChange={(ev) => setE({ ...e, notes: ev.target.value })} rows={2} /></div>
         <div className="flex gap-2">
