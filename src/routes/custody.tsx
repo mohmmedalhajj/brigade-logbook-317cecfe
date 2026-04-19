@@ -2,11 +2,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AuthGate } from "@/components/AuthGate";
 import { AppShell } from "@/components/AppShell";
 import { useEffect, useState } from "react";
-import { getAll, put, del, uid, type CustodyEntry } from "@/lib/db";
+import { getAll, put, del, uid, type CustodyEntry, type Executor } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2, Pencil, FileDown, ImagePlus } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -24,6 +25,8 @@ function Custody() {
   const [items, setItems] = useState<CustodyEntry[]>([]);
   const [editing, setEditing] = useState<CustodyEntry | null>(null);
   const [delId, setDelId] = useState<string | null>(null);
+  const [executors, setExecutors] = useState<Executor[]>([]);
+  useEffect(() => { (async () => setExecutors(await getAll("executors")))(); }, []);
 
   async function load() {
     const all = await getAll<CustodyEntry>("custody");
@@ -35,11 +38,11 @@ function Custody() {
   async function add() {
     const all = await getAll<CustodyEntry>("custody");
     const next = (all.reduce((m, x) => Math.max(m, x.number || 0), 0) || 0) + 1;
-    setEditing({ id: uid(), number: next, text: "", image: undefined, deliveryDate: todayISO(), createdAt: Date.now() });
+    setEditing({ id: uid(), number: next, text: "", image: undefined, deliveryDate: todayISO(), executor: executors[0]?.name || "", createdAt: Date.now() });
   }
   async function save(e: CustodyEntry) { await put("custody", e); setEditing(null); load(); }
   async function exportPdf(e: CustodyEntry) {
-    const body = htmlKV([["الرقم", e.number], ["تاريخ التسليم", e.deliveryDate]]) +
+    const body = htmlKV([["الرقم", e.number], ["المحور", e.executor || ""], ["تاريخ التسليم", e.deliveryDate]]) +
       `<h3 style="color:#2d4a2d;">تفاصيل العهدة</h3>` +
       `<div style="border:1px solid #cfd8cf; padding:10px; white-space:pre-wrap;">${htmlEscape(e.text)}</div>` +
       (e.image ? `<div style="margin-top:12px;"><img src="${e.image}" style="max-width:100%; border:1px solid #cfd8cf;" /></div>` : "");
