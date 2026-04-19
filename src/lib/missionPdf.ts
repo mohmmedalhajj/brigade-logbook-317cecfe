@@ -104,6 +104,6 @@ export async function missionToPDF(m: MissionBase, executorName: string) {
     title,
     subtitle: `رقم المهمة: ${d.missionNumber || ""}`,
     bodyHtml: body,
-    filename: `mission-${d.missionNumber || m.id}.pdf`,
+    filename: `مهمة-${d.missionNumber || m.id}.pdf`,
   });
 }

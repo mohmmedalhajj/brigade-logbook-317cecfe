@@ -90,7 +90,7 @@ function Stats() {
             : (m.data?.targetsCount || ""),
         ])
       );
-    await exportPDF({ title: `تقرير الإحصائيات الشهري - ${month}`, bodyHtml: body, filename: `stats-${month}.pdf` });
+    await exportPDF({ title: `تقرير الإحصائيات الشهري - ${month}`, bodyHtml: body, filename: `تقرير-الإحصائيات-${month}.pdf` });
   }
 
   return (

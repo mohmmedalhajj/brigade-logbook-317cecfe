@@ -22,8 +22,8 @@ function buildHtml({ title, subtitle, bodyHtml }: PDFOptions): HTMLDivElement {
     font-size: 14px; line-height: 1.8;
   `;
   wrapper.innerHTML = `
-    <div style="text-align:center; font-size:18px; font-weight:bold; color:#2d4a2d; margin-bottom:12px; letter-spacing:0.5px;">
-      بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+    <div style="text-align:center; font-size:22px; font-weight:700; color:#2d4a2d; margin-bottom:16px; font-family: 'Amiri', 'Scheherazade New', 'Traditional Arabic', 'Cairo', serif;">
+      بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
     </div>
     <div style="display:flex; align-items:center; justify-content:space-between; border-bottom: 3px solid #2d4a2d; padding-bottom: 16px; margin-bottom: 20px;">
       <img src="${logoUrl}" style="width:90px; height:90px; object-fit:contain;" crossorigin="anonymous" />
@@ -71,7 +71,7 @@ export async function exportPDF(opts: PDFOptions) {
     doc.write(`<!DOCTYPE html><html dir="rtl"><head><meta charset="utf-8">
       <link rel="preconnect" href="https://fonts.googleapis.com">
       <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-      <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+      <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
       <style>
         *,*::before,*::after{box-sizing:border-box;}
         html,body{margin:0;padding:0;background:#ffffff;color:#111;font-family:"Cairo","Segoe UI",Tahoma,Arial,sans-serif;direction:rtl;}
