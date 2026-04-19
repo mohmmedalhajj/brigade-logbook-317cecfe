@@ -97,9 +97,9 @@ function FuelTab() {
       bodyHtml: htmlKV([
         ["النوع", e.type],
         ["المحور", e.executor || ""],
-        ["الاستحقاق الشهري", e.monthlyAllowance],
-        ["المسحوب", e.withdrawn],
-        ["المتبقي", e.monthlyAllowance - e.withdrawn],
+        ["الاستحقاق الشهري", `${e.monthlyAllowance} لتر`],
+        ["المسحوب", `${e.withdrawn} لتر`],
+        ["المتبقي", `${e.monthlyAllowance - e.withdrawn} لتر`],
         ["التاريخ", e.date],
         ["الشهر", e.month],
         ["ملاحظات", e.notes],
@@ -120,7 +120,7 @@ function FuelTab() {
           <div key={t} className={`rounded-lg p-3 border ${low ? "border-destructive bg-destructive/10" : "border-border bg-muted/20"}`}>
             <div className="flex items-center justify-between text-sm">
               <span className="font-bold">{t}</span>
-              <span>المتبقي: <b className={low ? "text-destructive" : "text-gold"}>{r.remaining}</b> / {r.allowance}</span>
+              <span>المتبقي: <b className={low ? "text-destructive" : "text-gold"}>{r.remaining} لتر</b> / {r.allowance} لتر</span>
             </div>
             {low && <div className="flex items-center gap-1 text-xs text-destructive mt-1"><AlertCircle className="w-3 h-3" /> نفد المخصص — التجديد بداية الشهر</div>}
           </div>
@@ -135,7 +135,7 @@ function FuelTab() {
               <div className="text-xs text-muted-foreground mt-1">{e.date} • {e.month}</div>
               {e.executor && <div className="text-xs text-muted-foreground">المحور: {e.executor}</div>}
               <div className="text-sm mt-2">
-                المخصص: <b>{e.monthlyAllowance}</b> | المسحوب: <b>{e.withdrawn}</b> | المتبقي: <b className="text-gold">{e.monthlyAllowance - e.withdrawn}</b>
+                المخصص: <b>{e.monthlyAllowance} لتر</b> | المسحوب: <b>{e.withdrawn} لتر</b> | المتبقي: <b className="text-gold">{e.monthlyAllowance - e.withdrawn} لتر</b>
               </div>
               {e.notes && <div className="text-xs text-muted-foreground mt-1">{e.notes}</div>}
             </div>
@@ -193,8 +193,8 @@ function FuelEditor({ entry, executors, onSave, onCancel }: { entry: FuelEntry; 
           </Select>
         </div>
         <div className="grid grid-cols-2 gap-2">
-          <div><Label className="mb-1 block">الاستحقاق الشهري</Label><Input type="number" value={e.monthlyAllowance} onChange={(ev) => setE({ ...e, monthlyAllowance: Number(ev.target.value) })} /></div>
-          <div><Label className="mb-1 block">المسحوب</Label><Input type="number" value={e.withdrawn} onChange={(ev) => setE({ ...e, withdrawn: Number(ev.target.value) })} /></div>
+          <div><Label className="mb-1 block">الاستحقاق الشهري (لتر)</Label><Input type="number" value={e.monthlyAllowance} onChange={(ev) => setE({ ...e, monthlyAllowance: Number(ev.target.value) })} /></div>
+          <div><Label className="mb-1 block">المسحوب (لتر)</Label><Input type="number" value={e.withdrawn} onChange={(ev) => setE({ ...e, withdrawn: Number(ev.target.value) })} /></div>
           <div><Label className="mb-1 block">التاريخ</Label><Input type="date" value={e.date} onChange={(ev) => setE({ ...e, date: ev.target.value })} /></div>
           <div><Label className="mb-1 block">الشهر</Label><Input type="month" value={e.month} onChange={(ev) => setE({ ...e, month: ev.target.value })} /></div>
         </div>
