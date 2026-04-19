@@ -18,7 +18,7 @@ export const Route = createFileRoute("/stats")({
   ),
 });
 
-const TYPE_NAMES: Record<string, string> = { recon: "استطلاع", strike: "استهداف", artillery: "تصحيح مدفعي", jamming: "تشويش" };
+
 
 function Stats() {
   const [missions, setMissions] = useState<MissionBase[]>([]);
