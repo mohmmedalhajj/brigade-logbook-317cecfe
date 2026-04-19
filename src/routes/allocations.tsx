@@ -28,6 +28,7 @@ const FUEL_TYPES = ["بترول", "ديزل"] as const;
 const SHELL_TYPES = ["هاون 82", "هاون 60", "MK40"] as const;
 const todayISO = () => new Date().toISOString().slice(0, 10);
 const currentMonth = () => new Date().toISOString().slice(0, 7);
+const currentTime = () => new Date().toTimeString().slice(0, 5);
 
 function Allocations() {
   return (
@@ -63,30 +64,43 @@ function FuelTab() {
   useEffect(() => { (async () => setExecutors(await getAll("executors")))(); }, []);
 
   function emptyEntry(): FuelEntry {
-    return { id: uid(), type: "بترول", monthlyAllowance: 0, withdrawn: 0, date: todayISO(), month: currentMonth(), executor: executors[0]?.name || "", notes: "" };
+    return { id: uid(), type: "بترول", monthlyAllowance: 0, withdrawn: 0, date: todayISO(), time: currentTime(), month: currentMonth(), executor: executors[0]?.name || "", notes: "" };
   }
 
-  // remaining per type for current month
-  const monthlyRemaining = (type: string) => {
+  // remaining per type+executor for current month
+  const groupRemaining = (type: string, executor: string) => {
     const month = currentMonth();
-    const sameType = items.filter((i) => i.type === type && i.month === month);
-    if (sameType.length === 0) return null;
-    const allowance = Math.max(...sameType.map((s) => s.monthlyAllowance || 0));
-    const withdrawn = sameType.reduce((s, e) => s + (Number(e.withdrawn) || 0), 0);
+    const same = items.filter((i) => i.type === type && (i.executor || "") === (executor || "") && i.month === month);
+    if (same.length === 0) return null;
+    const allowance = Math.max(...same.map((s) => s.monthlyAllowance || 0));
+    const withdrawn = same.reduce((s, e) => s + (Number(e.withdrawn) || 0), 0);
     return { allowance, withdrawn, remaining: allowance - withdrawn };
   };
 
+  // unique (type, executor) pairs in current month for summary cards
+  const summaryGroups = (() => {
+    const month = currentMonth();
+    const seen = new Set<string>();
+    const out: { type: string; executor: string }[] = [];
+    items.filter((i) => i.month === month).forEach((i) => {
+      const key = `${i.type}|${i.executor || ""}`;
+      if (!seen.has(key)) { seen.add(key); out.push({ type: i.type, executor: i.executor || "" }); }
+    });
+    return out;
+  })();
+
   async function save(e: FuelEntry) {
-    // enforce: cannot exceed remaining
+    // enforce per type+executor+month
     const month = e.month || currentMonth();
-    const others = items.filter((i) => i.type === e.type && i.month === month && i.id !== e.id);
+    const others = items.filter((i) => i.type === e.type && (i.executor || "") === (e.executor || "") && i.month === month && i.id !== e.id);
     const allowance = Math.max(e.monthlyAllowance || 0, ...others.map((s) => s.monthlyAllowance || 0));
     const totalWithdrawn = others.reduce((s, x) => s + (Number(x.withdrawn) || 0), 0) + Number(e.withdrawn || 0);
     if (totalWithdrawn > allowance) {
-      alert(`تنبيه: تم تجاوز المخصص الشهري (${allowance}). المسحوب الكلي: ${totalWithdrawn}`);
+      alert(`تنبيه: تم تجاوز المخصص الشهري (${allowance} لتر) للمحور "${e.executor || "غير محدد"}". المسحوب الكلي: ${totalWithdrawn} لتر`);
       return;
     }
-    await put("fuel", { ...e, month });
+    // sync allowance across same group so summary stays consistent
+    await put("fuel", { ...e, month, monthlyAllowance: allowance });
     setEditing(null);
     load();
   }
