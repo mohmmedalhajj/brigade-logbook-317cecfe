@@ -164,7 +164,8 @@ function FuelTab() {
             <Button size="sm" variant="destructive" onClick={() => setDelId(e.id)}><Trash2 className="w-3 h-3" /></Button>
           </div>
         </div>
-      ))}
+        );
+      })}
 
       {items.length === 0 && <div className="text-center text-muted-foreground py-8">لا توجد سجلات</div>}
 
