@@ -132,6 +132,7 @@ function FuelTab() {
             <div>
               <div className="font-bold text-gold">{e.type}</div>
               <div className="text-xs text-muted-foreground mt-1">{e.date} • {e.month}</div>
+              {e.executor && <div className="text-xs text-muted-foreground">المحور: {e.executor}</div>}
               <div className="text-sm mt-2">
                 المخصص: <b>{e.monthlyAllowance}</b> | المسحوب: <b>{e.withdrawn}</b> | المتبقي: <b className="text-gold">{e.monthlyAllowance - e.withdrawn}</b>
               </div>
