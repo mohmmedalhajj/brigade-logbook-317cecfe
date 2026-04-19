@@ -337,11 +337,50 @@ function StatsTab() {
     const month = currentMonth();
     const f = fuel.filter((x) => x.month === month);
     const s = shells.filter((x) => x.date.startsWith(month));
+
+    // Fuel summary per type+executor
+    const fuelGroups = new Map<string, { type: string; executor: string; allowance: number; withdrawn: number }>();
+    f.forEach((x) => {
+      const key = `${x.type}|${x.executor || ""}`;
+      const g = fuelGroups.get(key) || { type: x.type, executor: x.executor || "—", allowance: 0, withdrawn: 0 };
+      g.allowance = Math.max(g.allowance, x.monthlyAllowance || 0);
+      g.withdrawn += Number(x.withdrawn) || 0;
+      fuelGroups.set(key, g);
+    });
+    const fuelSummary = Array.from(fuelGroups.values());
+    const totalFuelAllowance = fuelSummary.reduce((s2, g) => s2 + g.allowance, 0);
+    const totalFuelWithdrawn = fuelSummary.reduce((s2, g) => s2 + g.withdrawn, 0);
+
+    // Shells summary per type+executor
+    const shellGroups = new Map<string, { type: string; executor: string; count: number }>();
+    s.forEach((x) => {
+      const key = `${x.type}|${x.executor || ""}`;
+      const g = shellGroups.get(key) || { type: x.type, executor: x.executor || "—", count: 0 };
+      g.count += Number(x.count) || 0;
+      shellGroups.set(key, g);
+    });
+    const shellSummary = Array.from(shellGroups.values());
+    const totalShells = shellSummary.reduce((s2, g) => s2 + g.count, 0);
+
     const body =
-      `<h3 style="color:#2d4a2d;">المحروقات</h3>` +
-      htmlTable(["النوع", "المخصص", "المسحوب", "المتبقي"], f.map((x) => [x.type, x.monthlyAllowance, x.withdrawn, x.monthlyAllowance - x.withdrawn])) +
-      `<h3 style="color:#2d4a2d;">القذائف</h3>` +
-      htmlTable(["النوع", "العدد", "التاريخ"], s.map((x) => [x.type, x.count, x.date]));
+      htmlKV([
+        ["الشهر", month],
+        ["إجمالي المخصص (لتر)", totalFuelAllowance],
+        ["إجمالي المسحوب (لتر)", totalFuelWithdrawn],
+        ["إجمالي المتبقي (لتر)", totalFuelAllowance - totalFuelWithdrawn],
+        ["إجمالي القذائف", totalShells],
+      ]) +
+      `<h3 style="color:#2d4a2d;">ملخص المحروقات حسب المحور</h3>` +
+      htmlTable(["النوع", "المحور", "المخصص (لتر)", "المسحوب (لتر)", "المتبقي (لتر)"],
+        fuelSummary.map((g) => [g.type, g.executor, g.allowance, g.withdrawn, g.allowance - g.withdrawn])) +
+      `<h3 style="color:#2d4a2d;">سجلات المحروقات التفصيلية</h3>` +
+      htmlTable(["النوع", "المحور", "المخصص", "المسحوب", "التاريخ", "الوقت", "ملاحظات"],
+        f.map((x) => [x.type, x.executor || "—", x.monthlyAllowance, x.withdrawn, x.date, formatTimeAr(x.time), x.notes || ""])) +
+      `<h3 style="color:#2d4a2d;">ملخص القذائف حسب المحور</h3>` +
+      htmlTable(["النوع", "المحور", "العدد الكلي"], shellSummary.map((g) => [g.type, g.executor, g.count])) +
+      `<h3 style="color:#2d4a2d;">سجلات القذائف التفصيلية</h3>` +
+      htmlTable(["النوع", "المحور", "العدد", "التاريخ", "الوقت", "ملاحظات"],
+        s.map((x) => [x.type, x.executor || "—", x.count, x.date, formatTimeAr(x.time), x.notes || ""]));
     await exportPDF({ title: `تقرير المخصصات الشهري - ${month}`, bodyHtml: body, filename: `allocations-${month}.pdf` });
   }
 

@@ -47,10 +47,49 @@ function Stats() {
   async function exportMonthly() {
     const month = new Date().toISOString().slice(0, 7);
     const ms = missions.filter((m) => (m.data?.date || "").startsWith(month));
+
+    // targets count for the month
+    const monthTargets = ms.reduce((s, m) => {
+      if (m.type === "strike" && Array.isArray(m.data?.targets)) return s + m.data.targets.length;
+      return s + (Number(m.data?.targetsCount) || 0);
+    }, 0);
+
+    // count per type
+    const typeCounts = ms.reduce<Record<string, number>>((a, m) => { a[m.type] = (a[m.type] || 0) + 1; return a; }, {});
+    const typeRows = Object.entries(typeCounts).map(([k, v]) => [typeName(k), v]);
+
+    // count per executor
+    const execCounts = ms.reduce<Record<string, number>>((a, m) => {
+      const k = m.executor || m.data?.executor || "—"; a[k] = (a[k] || 0) + 1; return a;
+    }, {});
+    const execRows = Object.entries(execCounts).map(([k, v]) => [k, v]);
+
     const body =
-      htmlKV([["الشهر", month], ["إجمالي المهام", ms.length], ["إجمالي الأهداف", targetsCount]]) +
-      `<h3 style="color:#2d4a2d;">قائمة المهام</h3>` +
-      htmlTable(["#", "النوع", "رقم", "التاريخ", "القطاع"], ms.map((m, i) => [i + 1, typeName(m.type), m.data?.missionNumber, m.data?.date, m.data?.sector]));
+      htmlKV([
+        ["الشهر", month],
+        ["إجمالي المهام", ms.length],
+        ["إجمالي الأهداف", monthTargets],
+        ["عدد أنواع المهام", Object.keys(typeCounts).length],
+      ]) +
+      `<h3 style="color:#2d4a2d;">المهام حسب النوع</h3>` +
+      htmlTable(["النوع", "العدد"], typeRows) +
+      `<h3 style="color:#2d4a2d;">المهام حسب المحور</h3>` +
+      htmlTable(["المحور", "العدد"], execRows) +
+      `<h3 style="color:#2d4a2d;">قائمة المهام التفصيلية</h3>` +
+      htmlTable(
+        ["#", "النوع", "رقم المهمة", "التاريخ", "القطاع", "المحور", "الأهداف"],
+        ms.map((m, i) => [
+          i + 1,
+          typeName(m.type),
+          m.data?.missionNumber || "",
+          m.data?.date || "",
+          m.data?.sector || m.data?.area || "",
+          m.executor || m.data?.executor || "—",
+          m.type === "strike" && Array.isArray(m.data?.targets)
+            ? m.data.targets.length
+            : (m.data?.targetsCount || ""),
+        ])
+      );
     await exportPDF({ title: `تقرير الإحصائيات الشهري - ${month}`, bodyHtml: body, filename: `stats-${month}.pdf` });
   }
 
