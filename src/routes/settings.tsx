@@ -15,6 +15,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { InstallAppButton } from "@/components/InstallAppButton";
 
 export const Route = createFileRoute("/settings")({
   component: () => (<AuthGate><AppShell><Settings /></AppShell></AuthGate>),
@@ -31,6 +32,7 @@ function Settings() {
           <LogOut className="w-3 h-3" /> خروج
         </Button>
       </div>
+      <InstallAppButton />
       <Tabs defaultValue="types">
         <TabsList className="grid grid-cols-3 w-full">
           <TabsTrigger value="types">أنواع المهام</TabsTrigger>
