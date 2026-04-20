@@ -1,26 +1,51 @@
 {
   "name": "صقور اللواء الأول مغاوير",
   "short_name": "صقور المغاوير",
-  "description": "تطبيق إدارة العمليات العسكرية - صقور اللواء الأول مغاوير",
+  "description": "تطبيق إدارة العمليات العسكرية - صقور اللواء الأول مغاوير - يعمل بدون إنترنت",
+  "id": "/",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "fullscreen", "minimal-ui"],
   "orientation": "portrait",
   "background_color": "#0a0f0a",
   "theme_color": "#1a3a1a",
   "lang": "ar",
   "dir": "rtl",
+  "categories": ["productivity", "utilities", "business"],
+  "prefer_related_applications": false,
   "icons": [
     {
-      "src": "/logo.jpg",
+      "src": "/icon-192.png",
       "sizes": "192x192",
-      "type": "image/jpeg",
-      "purpose": "any maskable"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "/logo.jpg",
+      "src": "/icon-512.png",
       "sizes": "512x512",
-      "type": "image/jpeg",
-      "purpose": "any maskable"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "إضافة مهمة جديدة",
+      "short_name": "مهمة جديدة",
+      "url": "/missions/new",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "الإحصائيات",
+      "short_name": "إحصائيات",
+      "url": "/stats",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     }
   ]
 }
