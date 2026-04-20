@@ -40,8 +40,10 @@ export const Route = createRootRoute({
     links: [
       { rel: "stylesheet", href: appCss },
       { rel: "manifest", href: "/manifest.json" },
-      { rel: "icon", href: "/logo.jpg" },
-      { rel: "apple-touch-icon", href: "/logo.jpg" },
+      { rel: "icon", type: "image/png", sizes: "192x192", href: "/icon-192.png" },
+      { rel: "icon", type: "image/png", sizes: "512x512", href: "/icon-512.png" },
+      { rel: "apple-touch-icon", sizes: "192x192", href: "/icon-192.png" },
+      { rel: "apple-touch-icon", sizes: "512x512", href: "/icon-512.png" },
     ],
   }),
   shellComponent: RootShell,
@@ -66,13 +68,15 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function RootComponent() {
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const isPreview =
-      window.location.hostname.includes("id-preview--") ||
-      window.location.hostname.includes("lovableproject.com") ||
-      window.location.hostname.includes("lovable.app");
+    // Only treat the editor preview subdomain / iframe as "preview".
+    // The published app (e.g. brigade-logbook.lovable.app) MUST register the SW
+    // so the app works fully offline and is installable as a PWA/APK.
+    const host = window.location.hostname;
+    const isEditorPreview =
+      host.includes("id-preview--") || host.includes("lovableproject.com");
     let isIframe = false;
     try { isIframe = window.self !== window.top; } catch { isIframe = true; }
-    if (isPreview || isIframe) {
+    if (isEditorPreview || isIframe) {
       navigator.serviceWorker?.getRegistrations().then((rs) => rs.forEach((r) => r.unregister()));
       return;
     }
