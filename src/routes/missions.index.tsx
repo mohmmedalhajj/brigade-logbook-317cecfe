@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus, Pencil, Trash2, Share2, FileDown, Search } from "lucide-react";
-import { generateWhatsApp, shareWhatsApp } from "@/lib/whatsapp";
+import { generateWhatsApp, shareWhatsApp, shareWhatsAppWithMedia } from "@/lib/whatsapp";
 import { missionToPDF } from "@/lib/missionPdf";
 import { toast } from "sonner";
 import {
@@ -124,7 +124,12 @@ function MissionsList() {
                 onClick={() => {
                   const t = types.find((x) => x.id === m.type);
                   const enriched: any = { ...m, typeFields: t?.fields, typeName: t?.name };
-                  shareWhatsApp(generateWhatsApp(enriched, m.executor || ""));
+                  const text = generateWhatsApp(enriched, m.executor || "");
+                  if (m.attachments && m.attachments.length > 0) {
+                    shareWhatsAppWithMedia(text, m.attachments);
+                  } else {
+                    shareWhatsApp(text);
+                  }
                 }}>
                 <Share2 className="w-3 h-3" /> واتساب
               </Button>

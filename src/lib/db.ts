@@ -1,5 +1,11 @@
 import { openDB, type IDBPDatabase } from "idb";
 
+export interface MissionAttachment {
+  type: "image" | "video";
+  dataUrl: string;
+  name?: string;
+}
+
 export interface MissionBase {
   id: string;
   type: "recon" | "strike" | "artillery" | "jamming" | string;
@@ -8,6 +14,7 @@ export interface MissionBase {
   createdAt: number;
   executor?: string;
   data: Record<string, any>;
+  attachments?: MissionAttachment[];
 }
 
 export interface FuelEntry {

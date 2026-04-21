@@ -219,6 +219,43 @@ export function shareWhatsApp(text: string) {
   window.open(url, "_blank");
 }
 
+function dataUrlToFile(dataUrl: string, filename: string): File {
+  const [header, base64] = dataUrl.split(",");
+  const mime = header.match(/:(.*?);/)?.[1] || "application/octet-stream";
+  const binary = atob(base64);
+  const arr = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) arr[i] = binary.charCodeAt(i);
+  return new File([arr], filename, { type: mime });
+}
+
+export async function shareWhatsAppWithMedia(
+  text: string,
+  attachments: { type: "image" | "video"; dataUrl: string; name?: string }[]
+) {
+  const files: File[] = [];
+  for (let i = 0; i < attachments.length; i++) {
+    const att = attachments[i];
+    const ext = att.type === "image" ? "jpg" : "mp4";
+    const name = att.name || `مرفق_${i + 1}.${ext}`;
+    try {
+      files.push(dataUrlToFile(att.dataUrl, name));
+    } catch {}
+  }
+
+  // Try Web Share API with files
+  if (files.length > 0 && navigator.canShare && navigator.canShare({ files })) {
+    try {
+      await navigator.share({ text, files });
+      return;
+    } catch (e: any) {
+      if (e.name === "AbortError") return;
+    }
+  }
+
+  // Fallback: open WhatsApp with text only
+  shareWhatsApp(text);
+}
+
 export function copyText(text: string) {
   if (navigator.clipboard) navigator.clipboard.writeText(text);
 }
