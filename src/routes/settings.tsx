@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Plus, Trash2, Pencil, Eye, EyeOff, LogOut, Download, Upload, Save } from "lucide-react";
+import { Plus, Trash2, Pencil, Eye, EyeOff, LogOut, Download, Upload, Save, Search } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { logout } from "@/lib/auth";
 import {
@@ -289,6 +289,10 @@ function BackupTab() {
   const [msg, setMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [delBackupId, setDelBackupId] = useState<string | null>(null);
   const [confirmRestore, setConfirmRestore] = useState<(() => Promise<void>) | null>(null);
+  const [previewData, setPreviewData] = useState<{ name: string; data: Record<string, any[]> } | null>(null);
+  const [previewPwd, setPreviewPwd] = useState("");
+  const [previewId, setPreviewId] = useState<string | null>(null);
+  const [showPreviewPwd, setShowPreviewPwd] = useState(false);
 
   async function load() {
     const all = await getAll<Backup>("backups");
@@ -356,6 +360,38 @@ function BackupTab() {
       setMsg({ type: "error", text: "ملف غير صالح أو كلمة مرور خاطئة" });
     }
   }
+
+  function openPreview(b: Backup) {
+    setPreviewId(b.id);
+    setPreviewPwd("");
+    setPreviewData(null);
+    setShowPreviewPwd(false);
+  }
+
+  function decryptPreview() {
+    setMsg(null);
+    const b = backups.find((x) => x.id === previewId);
+    if (!b || !previewPwd) return setMsg({ type: "error", text: "كلمة المرور مطلوبة" });
+    try {
+      const expectedPwd = xorDecode(b.password, "soqour-key");
+      if (expectedPwd !== previewPwd) return setMsg({ type: "error", text: "كلمة المرور غير صحيحة" });
+      const decoded = xorDecode(b.data, previewPwd);
+      const parsed = JSON.parse(decoded);
+      setPreviewData({ name: b.name, data: parsed });
+    } catch {
+      setMsg({ type: "error", text: "فشل فك التشفير" });
+    }
+  }
+
+  const storeLabels: Record<string, string> = {
+    missions: "المهام",
+    fuel: "الوقود",
+    shells: "الذخيرة",
+    custody: "العهد",
+    missionTypes: "أنواع المهام",
+    executors: "الجهات المنفذة",
+    settings: "الإعدادات",
+  };
 
   return (
     <div className="space-y-4">
@@ -429,7 +465,10 @@ function BackupTab() {
                 <div className="font-bold">{b.name}</div>
                 <div className="text-xs text-muted-foreground">{new Date(b.createdAt).toLocaleString("ar-EG")}</div>
               </div>
-              <Button size="sm" variant="destructive" onClick={() => setDelBackupId(b.id)}><Trash2 className="w-3 h-3" /></Button>
+              <div className="flex gap-1">
+                <Button size="sm" variant="secondary" onClick={() => openPreview(b)}><Search className="w-3 h-3" /></Button>
+                <Button size="sm" variant="destructive" onClick={() => setDelBackupId(b.id)}><Trash2 className="w-3 h-3" /></Button>
+              </div>
             </div>
           ))}
         </div>
@@ -473,6 +512,61 @@ function BackupTab() {
             <AlertDialogCancel>إلغاء</AlertDialogCancel>
             <AlertDialogAction className="bg-primary" onClick={async () => { if (confirmRestore) { await confirmRestore(); setConfirmRestore(null); } }}>استعادة</AlertDialogAction>
           </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Preview backup dialog */}
+      <AlertDialog open={!!previewId} onOpenChange={(o) => { if (!o) { setPreviewId(null); setPreviewData(null); } }}>
+        <AlertDialogContent className="max-h-[85vh] overflow-auto">
+          <AlertDialogHeader>
+            <AlertDialogTitle>عرض محتويات النسخة</AlertDialogTitle>
+          </AlertDialogHeader>
+          {!previewData ? (
+            <div className="space-y-3">
+              <AlertDialogDescription>أدخل كلمة المرور لفتح النسخة الاحتياطية</AlertDialogDescription>
+              <div className="flex items-center gap-2">
+                <Input type={showPreviewPwd ? "text" : "password"} placeholder="كلمة المرور" value={previewPwd} onChange={(e) => setPreviewPwd(e.target.value)} className="flex-1" />
+                <button type="button" onClick={() => setShowPreviewPwd((s) => !s)} className="shrink-0 p-2 text-muted-foreground hover:text-foreground">
+                  {showPreviewPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              <AlertDialogFooter>
+                <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                <Button onClick={decryptPreview} className="bg-primary">فتح</Button>
+              </AlertDialogFooter>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="text-sm font-bold text-gold">{previewData.name}</div>
+              {Object.entries(previewData.data).map(([store, items]) => (
+                <div key={store} className="military-card rounded-lg p-3 space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="font-bold text-sm">{storeLabels[store] || store}</span>
+                    <span className="text-xs bg-primary/20 text-gold px-2 py-0.5 rounded-full">{items.length}</span>
+                  </div>
+                  {items.length > 0 && (
+                    <div className="max-h-40 overflow-auto space-y-1">
+                      {items.slice(0, 20).map((item: any, i: number) => (
+                        <div key={i} className="text-xs bg-muted/20 rounded p-2 border border-border/30">
+                          {store === "missions" && <span>{item.missionNumber} - {item.type} - {item.date}</span>}
+                          {store === "fuel" && <span>{item.type} - {item.withdrawn} لتر - {item.date}</span>}
+                          {store === "shells" && <span>{item.type} - {item.count} - {item.date}</span>}
+                          {store === "custody" && <span>عهدة #{item.number} - {item.text?.slice(0, 40)}</span>}
+                          {store === "missionTypes" && <span>{item.name}</span>}
+                          {store === "executors" && <span>{item.name}</span>}
+                          {store === "settings" && <span>{item.key}: {JSON.stringify(item.value).slice(0, 40)}</span>}
+                        </div>
+                      ))}
+                      {items.length > 20 && <div className="text-xs text-muted-foreground text-center">... و {items.length - 20} عنصر آخر</div>}
+                    </div>
+                  )}
+                </div>
+              ))}
+              <AlertDialogFooter>
+                <AlertDialogCancel>إغلاق</AlertDialogCancel>
+              </AlertDialogFooter>
+            </div>
+          )}
         </AlertDialogContent>
       </AlertDialog>
     </div>
