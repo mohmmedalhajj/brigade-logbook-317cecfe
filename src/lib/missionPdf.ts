@@ -39,6 +39,18 @@ const BUILTIN_LABELS: Record<string, string> = {
   targets: "الأهداف",
 };
 
+function attachmentsHtml(attachments?: MissionAttachment[]): string {
+  const images = (attachments || []).filter((a) => a.type === "image");
+  if (images.length === 0) return "";
+  let html = `<h3 style="color:#2d4a2d; margin-top:20px;">المرفقات (${images.length} صورة)</h3>`;
+  html += `<div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:8px;">`;
+  for (const att of images) {
+    html += `<img src="${att.dataUrl}" style="width:220px; height:auto; border:2px solid #2d4a2d; border-radius:8px; object-fit:cover;" crossorigin="anonymous" />`;
+  }
+  html += `</div>`;
+  return html;
+}
+
 export async function missionToPDF(m: MissionBase, executorName: string) {
   const d = m.data;
   let title = "تقرير مهمة";
