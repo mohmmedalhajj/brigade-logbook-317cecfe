@@ -364,9 +364,9 @@ function BackupTab() {
       <div className="military-card rounded-xl p-4 space-y-3">
         <h3 className="font-bold text-gold flex items-center gap-2"><Save className="w-4 h-4" /> إنشاء نسخة</h3>
         <Input placeholder="اسم النسخة" value={name} onChange={(e) => setName(e.target.value)} />
-        <div className="relative">
-          <Input type={showPwd ? "text" : "password"} placeholder="كلمة المرور" value={pwd} onChange={(e) => setPwd(e.target.value)} />
-          <button type="button" onClick={() => setShowPwd((s) => !s)} className="absolute inset-y-0 left-2 flex items-center text-muted-foreground">
+        <div className="flex items-center gap-2">
+          <Input type={showPwd ? "text" : "password"} placeholder="كلمة المرور" value={pwd} onChange={(e) => setPwd(e.target.value)} className="flex-1" />
+          <button type="button" onClick={() => setShowPwd((s) => !s)} className="shrink-0 p-2 text-muted-foreground hover:text-foreground">
             {showPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
           </button>
         </div>
@@ -390,9 +390,9 @@ function BackupTab() {
         ) : (
           <div className="text-sm text-muted-foreground text-center py-2">لا توجد نسخ مخزنة</div>
         )}
-        <div className="relative">
-          <Input type={showRestorePwd ? "text" : "password"} placeholder="كلمة المرور" value={restorePwd} onChange={(e) => setRestorePwd(e.target.value)} />
-          <button type="button" onClick={() => setShowRestorePwd((s) => !s)} className="absolute inset-y-0 left-2 flex items-center text-muted-foreground">
+        <div className="flex items-center gap-2">
+          <Input type={showRestorePwd ? "text" : "password"} placeholder="كلمة المرور" value={restorePwd} onChange={(e) => setRestorePwd(e.target.value)} className="flex-1" />
+          <button type="button" onClick={() => setShowRestorePwd((s) => !s)} className="shrink-0 p-2 text-muted-foreground hover:text-foreground">
             {showRestorePwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
           </button>
         </div>
@@ -401,9 +401,9 @@ function BackupTab() {
 
       <div className="military-card rounded-xl p-4 space-y-3">
         <h3 className="font-bold text-gold">استعادة من ملف</h3>
-        <div className="relative">
-          <Input type={showFilePwd ? "text" : "password"} placeholder="كلمة مرور الملف" value={filePwd} onChange={(e) => setFilePwd(e.target.value)} />
-          <button type="button" onClick={() => setShowFilePwd((s) => !s)} className="absolute inset-y-0 left-2 flex items-center text-muted-foreground">
+        <div className="flex items-center gap-2">
+          <Input type={showFilePwd ? "text" : "password"} placeholder="كلمة مرور الملف" value={filePwd} onChange={(e) => setFilePwd(e.target.value)} className="flex-1" />
+          <button type="button" onClick={() => setShowFilePwd((s) => !s)} className="shrink-0 p-2 text-muted-foreground hover:text-foreground">
             {showFilePwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
           </button>
         </div>
