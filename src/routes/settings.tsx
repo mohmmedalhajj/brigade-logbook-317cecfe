@@ -248,21 +248,31 @@ function ExecutorsTab() {
   );
 }
 
-// Simple XOR-based "encryption" with password
+// Encode: convert text to UTF-8 bytes, XOR with password bytes, then base64
 function xorEncode(text: string, password: string): string {
-  let out = "";
-  for (let i = 0; i < text.length; i++) {
-    out += String.fromCharCode(text.charCodeAt(i) ^ password.charCodeAt(i % password.length));
+  const encoder = new TextEncoder();
+  const data = encoder.encode(text);
+  const pwdBytes = encoder.encode(password);
+  const result = new Uint8Array(data.length);
+  for (let i = 0; i < data.length; i++) {
+    result[i] = data[i] ^ pwdBytes[i % pwdBytes.length];
   }
-  return btoa(unescape(encodeURIComponent(out)));
+  let binary = "";
+  for (let i = 0; i < result.length; i++) {
+    binary += String.fromCharCode(result[i]);
+  }
+  return btoa(binary);
 }
 function xorDecode(encoded: string, password: string): string {
-  const text = decodeURIComponent(escape(atob(encoded)));
-  let out = "";
-  for (let i = 0; i < text.length; i++) {
-    out += String.fromCharCode(text.charCodeAt(i) ^ password.charCodeAt(i % password.length));
+  const binary = atob(encoded);
+  const encoder = new TextEncoder();
+  const pwdBytes = encoder.encode(password);
+  const data = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    data[i] = binary.charCodeAt(i) ^ pwdBytes[i % pwdBytes.length];
   }
-  return out;
+  const decoder = new TextDecoder();
+  return decoder.decode(data);
 }
 
 function BackupTab() {
@@ -271,11 +281,14 @@ function BackupTab() {
   const [pwd, setPwd] = useState("");
   const [pwd2, setPwd2] = useState("");
   const [showPwd, setShowPwd] = useState(false);
-  const [restoreName, setRestoreName] = useState("");
+  const [restoreId, setRestoreId] = useState("");
   const [restorePwd, setRestorePwd] = useState("");
   const [showRestorePwd, setShowRestorePwd] = useState(false);
+  const [filePwd, setFilePwd] = useState("");
+  const [showFilePwd, setShowFilePwd] = useState(false);
   const [msg, setMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [delBackupId, setDelBackupId] = useState<string | null>(null);
+  const [confirmRestore, setConfirmRestore] = useState<(() => Promise<void>) | null>(null);
 
   async function load() {
     const all = await getAll<Backup>("backups");
@@ -307,21 +320,26 @@ function BackupTab() {
     load();
   }
 
-  async function restoreBackup() {
-    setMsg(null);
-    const b = backups.find((x) => x.name === restoreName.trim());
-    if (!b) return setMsg({ type: "error", text: "النسخة غير موجودة" });
+  async function doRestore(b: Backup, password: string) {
     try {
       const expectedPwd = xorDecode(b.password, "soqour-key");
-      if (expectedPwd !== restorePwd) return setMsg({ type: "error", text: "كلمة المرور غير صحيحة" });
-      const decoded = xorDecode(b.data, restorePwd);
+      if (expectedPwd !== password) return setMsg({ type: "error", text: "كلمة المرور غير صحيحة" });
+      const decoded = xorDecode(b.data, password);
       const parsed = JSON.parse(decoded);
       await importAll(parsed);
       setMsg({ type: "success", text: `تمت الاستعادة بنجاح من النسخة "${b.name}"` });
-      setRestoreName(""); setRestorePwd("");
+      setRestoreId(""); setRestorePwd("");
     } catch {
       setMsg({ type: "error", text: "فشل التحقق أو فك التشفير" });
     }
+  }
+
+  function restoreBackup() {
+    setMsg(null);
+    const b = backups.find((x) => x.id === restoreId);
+    if (!b) return setMsg({ type: "error", text: "اختر نسخة احتياطية" });
+    if (!restorePwd) return setMsg({ type: "error", text: "كلمة المرور مطلوبة" });
+    setConfirmRestore(() => async () => { await doRestore(b, restorePwd); });
   }
 
   async function importFromFile(file: File, password: string) {
@@ -333,6 +351,7 @@ function BackupTab() {
       const parsed = JSON.parse(decoded);
       await importAll(parsed);
       setMsg({ type: "success", text: "تمت الاستعادة من الملف" });
+      setFilePwd("");
     } catch {
       setMsg({ type: "error", text: "ملف غير صالح أو كلمة مرور خاطئة" });
     }
@@ -357,26 +376,46 @@ function BackupTab() {
 
       <div className="military-card rounded-xl p-4 space-y-3">
         <h3 className="font-bold text-gold flex items-center gap-2"><Upload className="w-4 h-4" /> استعادة من النسخ المخزنة</h3>
-        <Input placeholder="اسم النسخة" value={restoreName} onChange={(e) => setRestoreName(e.target.value)} />
+        {backups.length > 0 ? (
+          <Select value={restoreId} onValueChange={setRestoreId}>
+            <SelectTrigger><SelectValue placeholder="اختر نسخة احتياطية" /></SelectTrigger>
+            <SelectContent>
+              {backups.map((b) => (
+                <SelectItem key={b.id} value={b.id}>
+                  {b.name} - {new Date(b.createdAt).toLocaleDateString("ar-EG")}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <div className="text-sm text-muted-foreground text-center py-2">لا توجد نسخ مخزنة</div>
+        )}
         <div className="relative">
           <Input type={showRestorePwd ? "text" : "password"} placeholder="كلمة المرور" value={restorePwd} onChange={(e) => setRestorePwd(e.target.value)} />
           <button type="button" onClick={() => setShowRestorePwd((s) => !s)} className="absolute inset-y-0 left-2 flex items-center text-muted-foreground">
             {showRestorePwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
           </button>
         </div>
-        <Button onClick={restoreBackup} className="w-full bg-primary">استعادة</Button>
+        <Button onClick={restoreBackup} className="w-full bg-primary" disabled={!backups.length}>استعادة</Button>
       </div>
 
       <div className="military-card rounded-xl p-4 space-y-3">
         <h3 className="font-bold text-gold">استعادة من ملف</h3>
-        <Input id="restore-pwd" type="password" placeholder="كلمة مرور الملف" />
+        <div className="relative">
+          <Input type={showFilePwd ? "text" : "password"} placeholder="كلمة مرور الملف" value={filePwd} onChange={(e) => setFilePwd(e.target.value)} />
+          <button type="button" onClick={() => setShowFilePwd((s) => !s)} className="absolute inset-y-0 left-2 flex items-center text-muted-foreground">
+            {showFilePwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          </button>
+        </div>
         <label className="block w-full text-center bg-muted/30 border border-dashed border-border rounded-lg p-4 cursor-pointer hover:bg-muted/50">
           <Upload className="w-4 h-4 inline ml-2" />
           <span className="text-sm">اختر ملف نسخة احتياطية</span>
           <input type="file" accept=".bak" className="hidden" onChange={(e) => {
             const file = e.target.files?.[0];
-            const pwd = (document.getElementById("restore-pwd") as HTMLInputElement)?.value || "";
-            if (file) importFromFile(file, pwd);
+            if (file) {
+              if (!filePwd) { setMsg({ type: "error", text: "أدخل كلمة المرور أولاً" }); return; }
+              setConfirmRestore(() => async () => { await importFromFile(file, filePwd); });
+            }
           }} />
         </label>
       </div>
@@ -418,6 +457,21 @@ function BackupTab() {
             >
               حذف
             </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!confirmRestore} onOpenChange={(o) => { if (!o) setConfirmRestore(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>تأكيد الاستعادة</AlertDialogTitle>
+            <AlertDialogDescription>
+              سيتم استبدال جميع البيانات الحالية ببيانات النسخة الاحتياطية. هل أنت متأكد؟
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction className="bg-primary" onClick={async () => { if (confirmRestore) { await confirmRestore(); setConfirmRestore(null); } }}>استعادة</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
