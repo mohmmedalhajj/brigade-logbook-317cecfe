@@ -174,16 +174,8 @@ export async function missionToPDF(m: MissionBase, executorName: string) {
     );
   }
 
-  // Add image attachments to the PDF body
-  const imageAttachments = (m.attachments || []).filter((a) => a.type === "image");
-  if (imageAttachments.length > 0) {
-    body += `<h3 style="color:#2d4a2d; margin-top:20px;">المرفقات (${imageAttachments.length} صورة)</h3>`;
-    body += `<div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:8px;">`;
-    for (const att of imageAttachments) {
-      body += `<img src="${att.dataUrl}" style="width:220px; height:auto; border:2px solid #2d4a2d; border-radius:8px; object-fit:cover;" crossorigin="anonymous" />`;
-    }
-    body += `</div>`;
-  }
+  // Add image attachments for all mission types
+  body += attachmentsHtml(m.attachments);
 
   // Build Arabic filename
   const missionTypeName = title.replace(/^تقرير\s+/, "").trim();
