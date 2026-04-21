@@ -248,21 +248,31 @@ function ExecutorsTab() {
   );
 }
 
-// Simple XOR-based "encryption" with password
+// Encode: convert text to UTF-8 bytes, XOR with password bytes, then base64
 function xorEncode(text: string, password: string): string {
-  let out = "";
-  for (let i = 0; i < text.length; i++) {
-    out += String.fromCharCode(text.charCodeAt(i) ^ password.charCodeAt(i % password.length));
+  const encoder = new TextEncoder();
+  const data = encoder.encode(text);
+  const pwdBytes = encoder.encode(password);
+  const result = new Uint8Array(data.length);
+  for (let i = 0; i < data.length; i++) {
+    result[i] = data[i] ^ pwdBytes[i % pwdBytes.length];
   }
-  return btoa(unescape(encodeURIComponent(out)));
+  let binary = "";
+  for (let i = 0; i < result.length; i++) {
+    binary += String.fromCharCode(result[i]);
+  }
+  return btoa(binary);
 }
 function xorDecode(encoded: string, password: string): string {
-  const text = decodeURIComponent(escape(atob(encoded)));
-  let out = "";
-  for (let i = 0; i < text.length; i++) {
-    out += String.fromCharCode(text.charCodeAt(i) ^ password.charCodeAt(i % password.length));
+  const binary = atob(encoded);
+  const encoder = new TextEncoder();
+  const pwdBytes = encoder.encode(password);
+  const data = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    data[i] = binary.charCodeAt(i) ^ pwdBytes[i % pwdBytes.length];
   }
-  return out;
+  const decoder = new TextDecoder();
+  return decoder.decode(data);
 }
 
 function BackupTab() {
