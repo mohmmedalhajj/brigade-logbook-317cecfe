@@ -514,6 +514,61 @@ function BackupTab() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Preview backup dialog */}
+      <AlertDialog open={!!previewId} onOpenChange={(o) => { if (!o) { setPreviewId(null); setPreviewData(null); } }}>
+        <AlertDialogContent className="max-h-[85vh] overflow-auto">
+          <AlertDialogHeader>
+            <AlertDialogTitle>عرض محتويات النسخة</AlertDialogTitle>
+          </AlertDialogHeader>
+          {!previewData ? (
+            <div className="space-y-3">
+              <AlertDialogDescription>أدخل كلمة المرور لفتح النسخة الاحتياطية</AlertDialogDescription>
+              <div className="flex items-center gap-2">
+                <Input type={showPreviewPwd ? "text" : "password"} placeholder="كلمة المرور" value={previewPwd} onChange={(e) => setPreviewPwd(e.target.value)} className="flex-1" />
+                <button type="button" onClick={() => setShowPreviewPwd((s) => !s)} className="shrink-0 p-2 text-muted-foreground hover:text-foreground">
+                  {showPreviewPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              <AlertDialogFooter>
+                <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                <Button onClick={decryptPreview} className="bg-primary">فتح</Button>
+              </AlertDialogFooter>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="text-sm font-bold text-gold">{previewData.name}</div>
+              {Object.entries(previewData.data).map(([store, items]) => (
+                <div key={store} className="military-card rounded-lg p-3 space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="font-bold text-sm">{storeLabels[store] || store}</span>
+                    <span className="text-xs bg-primary/20 text-gold px-2 py-0.5 rounded-full">{items.length}</span>
+                  </div>
+                  {items.length > 0 && (
+                    <div className="max-h-40 overflow-auto space-y-1">
+                      {items.slice(0, 20).map((item: any, i: number) => (
+                        <div key={i} className="text-xs bg-muted/20 rounded p-2 border border-border/30">
+                          {store === "missions" && <span>{item.missionNumber} - {item.type} - {item.date}</span>}
+                          {store === "fuel" && <span>{item.type} - {item.withdrawn} لتر - {item.date}</span>}
+                          {store === "shells" && <span>{item.type} - {item.count} - {item.date}</span>}
+                          {store === "custody" && <span>عهدة #{item.number} - {item.text?.slice(0, 40)}</span>}
+                          {store === "missionTypes" && <span>{item.name}</span>}
+                          {store === "executors" && <span>{item.name}</span>}
+                          {store === "settings" && <span>{item.key}: {JSON.stringify(item.value).slice(0, 40)}</span>}
+                        </div>
+                      ))}
+                      {items.length > 20 && <div className="text-xs text-muted-foreground text-center">... و {items.length - 20} عنصر آخر</div>}
+                    </div>
+                  )}
+                </div>
+              ))}
+              <AlertDialogFooter>
+                <AlertDialogCancel>إغلاق</AlertDialogCancel>
+              </AlertDialogFooter>
+            </div>
+          )}
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
