@@ -289,6 +289,10 @@ function BackupTab() {
   const [msg, setMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [delBackupId, setDelBackupId] = useState<string | null>(null);
   const [confirmRestore, setConfirmRestore] = useState<(() => Promise<void>) | null>(null);
+  const [previewData, setPreviewData] = useState<{ name: string; data: Record<string, any[]> } | null>(null);
+  const [previewPwd, setPreviewPwd] = useState("");
+  const [previewId, setPreviewId] = useState<string | null>(null);
+  const [showPreviewPwd, setShowPreviewPwd] = useState(false);
 
   async function load() {
     const all = await getAll<Backup>("backups");
