@@ -361,6 +361,38 @@ function BackupTab() {
     }
   }
 
+  function openPreview(b: Backup) {
+    setPreviewId(b.id);
+    setPreviewPwd("");
+    setPreviewData(null);
+    setShowPreviewPwd(false);
+  }
+
+  function decryptPreview() {
+    setMsg(null);
+    const b = backups.find((x) => x.id === previewId);
+    if (!b || !previewPwd) return setMsg({ type: "error", text: "كلمة المرور مطلوبة" });
+    try {
+      const expectedPwd = xorDecode(b.password, "soqour-key");
+      if (expectedPwd !== previewPwd) return setMsg({ type: "error", text: "كلمة المرور غير صحيحة" });
+      const decoded = xorDecode(b.data, previewPwd);
+      const parsed = JSON.parse(decoded);
+      setPreviewData({ name: b.name, data: parsed });
+    } catch {
+      setMsg({ type: "error", text: "فشل فك التشفير" });
+    }
+  }
+
+  const storeLabels: Record<string, string> = {
+    missions: "المهام",
+    fuel: "الوقود",
+    shells: "الذخيرة",
+    custody: "العهد",
+    missionTypes: "أنواع المهام",
+    executors: "الجهات المنفذة",
+    settings: "الإعدادات",
+  };
+
   return (
     <div className="space-y-4">
       {msg && <div className={`p-3 rounded-lg text-sm ${msg.type === "success" ? "bg-primary/20 text-gold border border-primary" : "bg-destructive/20 text-destructive border border-destructive"}`}>{msg.text}</div>}
