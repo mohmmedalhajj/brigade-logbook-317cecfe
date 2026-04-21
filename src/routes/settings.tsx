@@ -465,7 +465,10 @@ function BackupTab() {
                 <div className="font-bold">{b.name}</div>
                 <div className="text-xs text-muted-foreground">{new Date(b.createdAt).toLocaleString("ar-EG")}</div>
               </div>
-              <Button size="sm" variant="destructive" onClick={() => setDelBackupId(b.id)}><Trash2 className="w-3 h-3" /></Button>
+              <div className="flex gap-1">
+                <Button size="sm" variant="secondary" onClick={() => openPreview(b)}><Search className="w-3 h-3" /></Button>
+                <Button size="sm" variant="destructive" onClick={() => setDelBackupId(b.id)}><Trash2 className="w-3 h-3" /></Button>
+              </div>
             </div>
           ))}
         </div>
