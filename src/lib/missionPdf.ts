@@ -1,5 +1,5 @@
 import { exportPDF, htmlKV, htmlTable, htmlEscape } from "./pdf";
-import { getAll, type MissionBase, type MissionType } from "./db";
+import { getAll, type MissionBase, type MissionType, type MissionAttachment } from "./db";
 
 // Built-in Arabic labels for known field keys (used as fallback for custom types)
 const BUILTIN_LABELS: Record<string, string> = {
@@ -162,7 +162,18 @@ export async function missionToPDF(m: MissionBase, executorName: string) {
     );
   }
 
-  // Build Arabic filename: "<اسم المهمة> - رقم <missionNumber>.pdf"
+  // Add image attachments to the PDF body
+  const imageAttachments = (m.attachments || []).filter((a) => a.type === "image");
+  if (imageAttachments.length > 0) {
+    body += `<h3 style="color:#2d4a2d; margin-top:20px;">المرفقات (${imageAttachments.length} صورة)</h3>`;
+    body += `<div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:8px;">`;
+    for (const att of imageAttachments) {
+      body += `<img src="${att.dataUrl}" style="width:220px; height:auto; border:2px solid #2d4a2d; border-radius:8px; object-fit:cover;" crossorigin="anonymous" />`;
+    }
+    body += `</div>`;
+  }
+
+  // Build Arabic filename
   const missionTypeName = title.replace(/^تقرير\s+/, "").trim();
   const missionNum = d.missionNumber || m.id;
   const filename = `${missionTypeName} - رقم ${missionNum}.pdf`;
