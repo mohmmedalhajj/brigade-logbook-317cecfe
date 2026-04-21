@@ -281,11 +281,14 @@ function BackupTab() {
   const [pwd, setPwd] = useState("");
   const [pwd2, setPwd2] = useState("");
   const [showPwd, setShowPwd] = useState(false);
-  const [restoreName, setRestoreName] = useState("");
+  const [restoreId, setRestoreId] = useState("");
   const [restorePwd, setRestorePwd] = useState("");
   const [showRestorePwd, setShowRestorePwd] = useState(false);
+  const [filePwd, setFilePwd] = useState("");
+  const [showFilePwd, setShowFilePwd] = useState(false);
   const [msg, setMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [delBackupId, setDelBackupId] = useState<string | null>(null);
+  const [confirmRestore, setConfirmRestore] = useState<(() => Promise<void>) | null>(null);
 
   async function load() {
     const all = await getAll<Backup>("backups");
