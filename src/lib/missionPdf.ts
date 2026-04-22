@@ -1,5 +1,6 @@
 import { exportPDF, htmlKV, htmlTable, htmlEscape } from "./pdf";
 import { getAll, type MissionBase, type MissionType, type MissionAttachment } from "./db";
+import { formatTimeAr } from "./utils";
 
 // Built-in Arabic labels for known field keys (used as fallback for custom types)
 const BUILTIN_LABELS: Record<string, string> = {
@@ -65,8 +66,8 @@ export async function missionToPDF(m: MissionBase, executorName: string) {
         ["أمر المهمة", d.missionOrder],
         ["أمام قطاع", d.sector],
         ["التاريخ", d.date],
-        ["وقت الخروج", d.exitTime],
-        ["وقت العودة", d.returnTime],
+        ["وقت الخروج", formatTimeAr(d.exitTime)],
+        ["وقت العودة", formatTimeAr(d.returnTime)],
         ["عدد الطلعات", d.sortiesCount],
         ["عدد الأهداف", d.targetsCount],
       ]) +
@@ -88,8 +89,8 @@ export async function missionToPDF(m: MissionBase, executorName: string) {
         ["نوع الطائرة", d.aircraftType],
         ["كود المهمة", d.code],
         ["التاريخ", d.date],
-        ["وقت البداية", d.startTime],
-        ["وقت النهاية", d.endTime],
+        ["وقت البداية", formatTimeAr(d.startTime)],
+        ["وقت النهاية", formatTimeAr(d.endTime)],
         ["عدد الطلعات", d.sortiesCount],
         ["الغرض", d.purpose],
       ]) +
@@ -98,7 +99,7 @@ export async function missionToPDF(m: MissionBase, executorName: string) {
         ["#", "الوقت", "نوع الهدف", "تفاصيل", "الإحداثي", "LV", "المقذوف", "قوة الضربة", "ملاحظات"],
         targets.map((t: any, i: number) => [
           i + 1,
-          t.time,
+          formatTimeAr(t.time),
           t.targetType,
           t.details,
           t.coordinate,
@@ -133,7 +134,7 @@ export async function missionToPDF(m: MissionBase, executorName: string) {
       ["الجهة المنفذة", executorName],
       ["أمام قطاع", d.sector],
       ["التاريخ", d.date],
-      ["الوقت", d.time],
+      ["الوقت", formatTimeAr(d.time)],
       ["نوع الطائرة", d.aircraftType],
       ["الرقم التسلسلي", d.serial],
       ["إحداثي البداية", d.startCoord],
@@ -170,7 +171,11 @@ export async function missionToPDF(m: MissionBase, executorName: string) {
     body = htmlKV(
       orderedKeys
         .filter((k) => d[k] !== undefined && d[k] !== null && d[k] !== "")
-        .map((k) => [labelFor(k), d[k]])
+        .map((k) => {
+          const fieldDef = typeDef?.fields.find((f) => f.key === k);
+          const val = fieldDef?.type === "time" ? formatTimeAr(d[k]) : d[k];
+          return [labelFor(k), val];
+        })
     );
   }
 

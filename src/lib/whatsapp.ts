@@ -32,8 +32,8 @@ export function generateWhatsApp(mission: MissionBase, executorName: string): st
       line("رقم المهمة", d.missionNumber),
       line("أمام قطاع", d.sector),
       line("تاريخ", d.date),
-      line("الخروج", d.exitTime),
-      line("العودة", d.returnTime),
+      line("الخروج", formatTimeAr(d.exitTime)),
+      line("العودة", formatTimeAr(d.returnTime)),
       line("عدد الطلعات", d.sortiesCount),
       line("عدد الأهداف", d.targetsCount),
       "",
@@ -55,7 +55,7 @@ export function generateWhatsApp(mission: MissionBase, executorName: string): st
               `${i + 1}`,
               line("الهدف", t.targetType),
               `الإحداثي: ${t.coordinate || ""}    LV ${t.lv || ""}`,
-              line("الوقت", t.time),
+              line("الوقت", formatTimeAr(t.time)),
               line("نوع المقذوف", t.projectile),
               line("قوة الضربة", t.power),
               line("ملاحظات", t.notes),
@@ -77,8 +77,8 @@ export function generateWhatsApp(mission: MissionBase, executorName: string): st
       line("نوع الطائرة", d.aircraftType),
       line("كود المهمة", d.code),
       line("التاريخ", d.date),
-      line("الخروج", d.startTime),
-      line("العودة", d.endTime),
+      line("الخروج", formatTimeAr(d.startTime)),
+      line("العودة", formatTimeAr(d.endTime)),
       line("عدد الطلعات", d.sortiesCount),
       line("الغرض", d.purpose),
       "",
@@ -122,7 +122,7 @@ export function generateWhatsApp(mission: MissionBase, executorName: string): st
       line("رقم المهمة", d.missionNumber),
       line("أمام قطاع", d.sector),
       line("التاريخ", d.date),
-      line("الوقت", d.time),
+      line("الوقت", formatTimeAr(d.time)),
       line("نوع الطائرة", d.aircraftType),
       line("الرقم التسلسلي", d.serial),
       `إحداثي البداية: ${d.startCoord || ""}    LV ${d.startLV || ""}`,
@@ -152,7 +152,8 @@ export function generateWhatsApp(mission: MissionBase, executorName: string): st
 
   if (fields.length > 0) {
     for (const f of fields) {
-      lines.push(line(f.label, d[f.key]));
+      const val = (f as any).type === "time" ? formatTimeAr(d[f.key]) : d[f.key];
+      lines.push(line(f.label, val));
     }
   } else {
     // Fallback: show raw keys if no field metadata is available
