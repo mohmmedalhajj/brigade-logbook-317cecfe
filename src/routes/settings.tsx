@@ -73,7 +73,7 @@ function TypesTab() {
   function generateTemplate(t: MissionType): string {
     const lines = [
       "بسم الله الرحمن الرحيم",
-      ""اللواء 35 مشاة",",
+      "''اللواء 35 مشاة",
       "{executor}",
       `الموضوع تقرير ${t.name}`,
       "",
