@@ -34,12 +34,14 @@ function Settings() {
       </div>
       <InstallAppButton />
       <Tabs defaultValue="types">
-        <TabsList className="grid grid-cols-3 w-full">
+        <TabsList className="grid grid-cols-4 w-full">
           <TabsTrigger value="types">أنواع المهام</TabsTrigger>
+          <TabsTrigger value="shells">القذائف</TabsTrigger>
           <TabsTrigger value="executors">الجهة المنفذة</TabsTrigger>
           <TabsTrigger value="backup">النسخ الاحتياطي</TabsTrigger>
         </TabsList>
         <TabsContent value="types"><TypesTab /></TabsContent>
+        <TabsContent value="shells"><ShellTypesTab /></TabsContent>
         <TabsContent value="executors"><ExecutorsTab /></TabsContent>
         <TabsContent value="backup"><BackupTab /></TabsContent>
       </Tabs>
