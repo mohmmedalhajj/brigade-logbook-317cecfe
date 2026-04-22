@@ -2,7 +2,7 @@
 import type { MissionBase } from "./db";
 import { formatTimeAr } from "./utils";
 
-const HEADER = "بسم الله الرحمن الرحيم\nصقور ل1 مغاوير";
+const HEADER = "بسم الله الرحمن الرحيم\nconst HEADER = "بسم الله الرحمن الرحيم\nاللواء 35 مشاة";";
 const FOOTER = ".........إنتهى أخي........";
 
 function line(label: string, value: any) {

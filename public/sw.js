@@ -1,4 +1,4 @@
-// Offline-first Service Worker for صقور اللواء الأول مغاوير
+// Offline-first Service Worker for // Offline-first Service Worker for اللواء 35 مشاة
 // Strategy:
 //  - Precache the app shell (HTML routes + manifest + icons + fonts).
 //  - Cache-first for static assets (JS/CSS/fonts/images) so the app boots
