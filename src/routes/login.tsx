@@ -31,7 +31,7 @@ function LoginPage() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <img src={logo} alt="شعار" className="w-32 h-32 mx-auto rounded-full object-cover logo-glow ring-4 ring-gold/40" />
-          <div className="mt-4 font-bold text-xl"><div className="mt-4 font-bold text-xl">اللواء 35 مشاة</div></div>
+          <div className="mt-4 font-bold text-xl">اللواء 35 مشاة</div>
           <div className="mt-1 text-xs text-muted-foreground">وَمَا رَمَيْتَ إِذْ رَمَيْتَ وَلَكِنَّ اللَّهَ رَمَى</div>
         </div>
         <form onSubmit={submit} className="military-card rounded-xl p-5 space-y-4">
