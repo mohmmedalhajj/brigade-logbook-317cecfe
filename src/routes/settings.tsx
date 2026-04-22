@@ -34,11 +34,11 @@ function Settings() {
       </div>
       <InstallAppButton />
       <Tabs defaultValue="types">
-        <TabsList className="grid grid-cols-4 w-full">
-          <TabsTrigger value="types">أنواع المهام</TabsTrigger>
-          <TabsTrigger value="shells">القذائف</TabsTrigger>
-          <TabsTrigger value="executors">الجهة المنفذة</TabsTrigger>
-          <TabsTrigger value="backup">النسخ الاحتياطي</TabsTrigger>
+        <TabsList className="grid grid-cols-4 w-full gap-1 p-1">
+          <TabsTrigger value="types" className="text-xs px-2 py-1.5">أنواع المهام</TabsTrigger>
+          <TabsTrigger value="shells" className="text-xs px-2 py-1.5">القذائف</TabsTrigger>
+          <TabsTrigger value="executors" className="text-xs px-2 py-1.5">الجهة المنفذة</TabsTrigger>
+          <TabsTrigger value="backup" className="text-xs px-2 py-1.5">النسخ الاحتياطي</TabsTrigger>
         </TabsList>
         <TabsContent value="types"><TypesTab /></TabsContent>
         <TabsContent value="shells"><ShellTypesTab /></TabsContent>
