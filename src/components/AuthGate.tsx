@@ -32,7 +32,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
             alt="شعار"
             className="w-40 h-40 mx-auto rounded-full object-cover logo-glow ring-4 ring-gold/40"
           />
-          <div className="mt-6 font-bold text-xl">صقور اللواء الأول مغاوير</div>
+          <div className="mt-6 font-bold text-xl"><div className="mt-6 font-bold text-xl">اللواء 35 مشاة</div></div>
           <div className="mt-2 text-sm text-muted-foreground">وَمَا رَمَيْتَ إِذْ رَمَيْتَ وَلَكِنَّ اللَّهَ رَمَى</div>
         </div>
       </div>

@@ -28,7 +28,7 @@ function buildHtml({ title, subtitle, bodyHtml }: PDFOptions): HTMLDivElement {
     <div style="display:flex; align-items:center; justify-content:space-between; border-bottom: 3px solid #2d4a2d; padding-bottom: 16px; margin-bottom: 20px;">
       <img src="${logoUrl}" style="width:90px; height:90px; object-fit:contain;" crossorigin="anonymous" />
       <div style="text-align:center; flex:1;">
-        <div style="font-size:20px; font-weight:bold; color:#2d4a2d;">صقور اللواء الأول مغاوير</div>
+        <div style="font-size:20px; font-weight:bold; color:#2d4a2d;"><div style="font-size:20px; font-weight:bold; color:#2d4a2d;">اللواء 35 مشاة</div></div>
         <div style="font-size:13px; color:#666; margin-top:4px;">وَمَا رَمَيْتَ إِذْ رَمَيْتَ وَلَكِنَّ اللَّهَ رَمَى</div>
       </div>
       <div style="width:90px;"></div>
