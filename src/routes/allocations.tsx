@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AuthGate } from "@/components/AuthGate";
 import { AppShell } from "@/components/AppShell";
 import { useEffect, useState } from "react";
-import { getAll, put, del, uid, type FuelEntry, type ShellEntry, type Executor } from "@/lib/db";
+import { getAll, put, del, get, uid, type FuelEntry, type ShellEntry, type Executor } from "@/lib/db";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,7 +26,7 @@ export const Route = createFileRoute("/allocations")({
 });
 
 const FUEL_TYPES = ["بترول", "ديزل"] as const;
-const SHELL_TYPES = ["هاون 82", "هاون 60", "MK40"] as const;
+const DEFAULT_SHELL_TYPES = ["هاون 82", "هاون 60", "MK40"];
 const todayISO = () => new Date().toISOString().slice(0, 10);
 const currentMonth = () => new Date().toISOString().slice(0, 7);
 const currentTime = () => new Date().toTimeString().slice(0, 5);
