@@ -19,7 +19,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center gap-3">
           <img src={logo} alt="شعار" className="w-11 h-11 rounded-full object-cover ring-2 ring-gold/60" />
           <div className="flex-1">
-            <div className="font-bold text-base leading-tight"><div className="font-bold text-base leading-tight">اللواء 35 مشاة</div></div>
+            <div className="font-bold text-base leading-tight">اللواء 35 مشاة</div>
             <div className="text-[11px] text-muted-foreground leading-tight">وَمَا رَمَيْتَ إِذْ رَمَيْتَ وَلَكِنَّ اللَّهَ رَمَى</div>
           </div>
         </div>
