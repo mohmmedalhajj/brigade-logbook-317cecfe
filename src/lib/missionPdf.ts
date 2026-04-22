@@ -171,7 +171,11 @@ export async function missionToPDF(m: MissionBase, executorName: string) {
     body = htmlKV(
       orderedKeys
         .filter((k) => d[k] !== undefined && d[k] !== null && d[k] !== "")
-        .map((k) => [labelFor(k), d[k]])
+        .map((k) => {
+          const fieldDef = typeDef?.fields.find((f) => f.key === k);
+          const val = fieldDef?.type === "time" ? formatTimeAr(d[k]) : d[k];
+          return [labelFor(k), val];
+        })
     );
   }
 

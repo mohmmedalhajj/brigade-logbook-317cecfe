@@ -152,7 +152,8 @@ export function generateWhatsApp(mission: MissionBase, executorName: string): st
 
   if (fields.length > 0) {
     for (const f of fields) {
-      lines.push(line(f.label, d[f.key]));
+      const val = (f as any).type === "time" ? formatTimeAr(d[f.key]) : d[f.key];
+      lines.push(line(f.label, val));
     }
   } else {
     // Fallback: show raw keys if no field metadata is available
