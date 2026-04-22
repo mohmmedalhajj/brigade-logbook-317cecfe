@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AuthGate } from "@/components/AuthGate";
 import { AppShell } from "@/components/AppShell";
 import { useEffect, useState } from "react";
-import { getAll, put, del, uid, exportAll, importAll, type MissionType, type Executor, type Backup } from "@/lib/db";
+import { getAll, put, del, get, uid, exportAll, importAll, type MissionType, type Executor, type Backup } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,12 +34,14 @@ function Settings() {
       </div>
       <InstallAppButton />
       <Tabs defaultValue="types">
-        <TabsList className="grid grid-cols-3 w-full">
+        <TabsList className="grid grid-cols-4 w-full">
           <TabsTrigger value="types">أنواع المهام</TabsTrigger>
+          <TabsTrigger value="shells">القذائف</TabsTrigger>
           <TabsTrigger value="executors">الجهة المنفذة</TabsTrigger>
           <TabsTrigger value="backup">النسخ الاحتياطي</TabsTrigger>
         </TabsList>
         <TabsContent value="types"><TypesTab /></TabsContent>
+        <TabsContent value="shells"><ShellTypesTab /></TabsContent>
         <TabsContent value="executors"><ExecutorsTab /></TabsContent>
         <TabsContent value="backup"><BackupTab /></TabsContent>
       </Tabs>
@@ -241,6 +243,63 @@ function ExecutorsTab() {
           <AlertDialogFooter>
             <AlertDialogCancel>إلغاء</AlertDialogCancel>
             <AlertDialogAction className="bg-destructive" onClick={async () => { if (delId) { await del("executors", delId); setDelId(null); load(); }}}>حذف</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
+
+const DEFAULT_SHELL_TYPES = ["هاون 82", "هاون 60", "MK40"];
+
+function ShellTypesTab() {
+  const [items, setItems] = useState<string[]>([]);
+  const [name, setName] = useState("");
+  const [delIdx, setDelIdx] = useState<number | null>(null);
+
+  async function load() {
+    const saved = await get<{ key: string; value: string[] }>("settings", "shellTypes");
+    setItems(saved?.value || DEFAULT_SHELL_TYPES);
+  }
+  useEffect(() => { load(); }, []);
+
+  async function saveItems(newItems: string[]) {
+    await put("settings", { key: "shellTypes", value: newItems });
+    setItems(newItems);
+  }
+
+  async function add() {
+    if (!name.trim() || items.includes(name.trim())) return;
+    await saveItems([...items, name.trim()]);
+    setName("");
+  }
+
+  async function remove(idx: number) {
+    await saveItems(items.filter((_, i) => i !== idx));
+    setDelIdx(null);
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex gap-2">
+        <Input placeholder="اسم القذيفة الجديدة" value={name} onChange={(e) => setName(e.target.value)} />
+        <Button onClick={add} className="bg-primary"><Plus className="w-4 h-4" /></Button>
+      </div>
+      {items.map((item, idx) => (
+        <div key={idx} className="military-card rounded-xl p-3 flex justify-between items-center">
+          <span>{item} {DEFAULT_SHELL_TYPES.includes(item) && <span className="text-xs text-muted-foreground">(مدمج)</span>}</span>
+          {!DEFAULT_SHELL_TYPES.includes(item) && (
+            <Button size="sm" variant="destructive" onClick={() => setDelIdx(idx)}><Trash2 className="w-3 h-3" /></Button>
+          )}
+        </div>
+      ))}
+
+      <AlertDialog open={delIdx !== null} onOpenChange={(o) => !o && setDelIdx(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader><AlertDialogTitle>حذف</AlertDialogTitle><AlertDialogDescription>هل أنت متأكد من حذف هذا النوع؟</AlertDialogDescription></AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction className="bg-destructive" onClick={() => { if (delIdx !== null) remove(delIdx); }}>حذف</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

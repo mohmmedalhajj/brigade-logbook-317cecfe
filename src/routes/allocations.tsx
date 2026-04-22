@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AuthGate } from "@/components/AuthGate";
 import { AppShell } from "@/components/AppShell";
 import { useEffect, useState } from "react";
-import { getAll, put, del, uid, type FuelEntry, type ShellEntry, type Executor } from "@/lib/db";
+import { getAll, put, del, get, uid, type FuelEntry, type ShellEntry, type Executor } from "@/lib/db";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,7 +26,7 @@ export const Route = createFileRoute("/allocations")({
 });
 
 const FUEL_TYPES = ["بترول", "ديزل"] as const;
-const SHELL_TYPES = ["هاون 82", "هاون 60", "MK40"] as const;
+const DEFAULT_SHELL_TYPES = ["هاون 82", "هاون 60", "MK40"];
 const todayISO = () => new Date().toISOString().slice(0, 10);
 const currentMonth = () => new Date().toISOString().slice(0, 7);
 const currentTime = () => new Date().toTimeString().slice(0, 5);
@@ -235,7 +235,14 @@ function ShellsTab() {
   const [editing, setEditing] = useState<ShellEntry | null>(null);
   const [delId, setDelId] = useState<string | null>(null);
   const [executors, setExecutors] = useState<Executor[]>([]);
+  const [shellTypes, setShellTypes] = useState<string[]>(DEFAULT_SHELL_TYPES);
   useEffect(() => { (async () => setExecutors(await getAll("executors")))(); }, []);
+  useEffect(() => {
+    (async () => {
+      const saved = await get<{ key: string; value: string[] }>("settings", "shellTypes");
+      if (saved?.value) setShellTypes(saved.value);
+    })();
+  }, []);
 
   async function load() {
     const all = await getAll<ShellEntry>("shells");
@@ -286,7 +293,7 @@ function ShellsTab() {
               <Label className="mb-1 block">النوع</Label>
               <Select value={editing.type} onValueChange={(v) => setEditing({ ...editing, type: v as any })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{SHELL_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+                <SelectContent>{shellTypes.map((t: string) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div>
@@ -326,12 +333,18 @@ function ShellsTab() {
 function StatsTab() {
   const [fuel, setFuel] = useState<FuelEntry[]>([]);
   const [shells, setShells] = useState<ShellEntry[]>([]);
+  const [shellTypes, setShellTypes] = useState<string[]>(DEFAULT_SHELL_TYPES);
   useEffect(() => {
-    (async () => { setFuel(await getAll("fuel")); setShells(await getAll("shells")); })();
+    (async () => {
+      setFuel(await getAll("fuel"));
+      setShells(await getAll("shells"));
+      const saved = await get<{ key: string; value: string[] }>("settings", "shellTypes");
+      if (saved?.value) setShellTypes(saved.value);
+    })();
   }, []);
 
   const fuelData = FUEL_TYPES.map((t) => ({ name: t, value: fuel.filter((f) => f.type === t).reduce((s, f) => s + (f.withdrawn || 0), 0) }));
-  const shellData = SHELL_TYPES.map((t) => ({ name: t, value: shells.filter((s) => s.type === t).reduce((s2, e) => s2 + e.count, 0) }));
+  const shellData = shellTypes.map((t: string) => ({ name: t, value: shells.filter((s) => s.type === t).reduce((s2, e) => s2 + e.count, 0) }));
 
   async function exportMonthly() {
     const month = currentMonth();
