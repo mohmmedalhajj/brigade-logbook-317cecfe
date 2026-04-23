@@ -68,9 +68,6 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function RootComponent() {
   useEffect(() => {
     if (typeof window === "undefined") return;
-    // Only treat the editor preview subdomain / iframe as "preview".
-    // The published app (e.g. brigade-logbook.lovable.app) MUST register the SW
-    // so the app works fully offline and is installable as a PWA/APK.
     const host = window.location.hostname;
     const isEditorPreview =
       host.includes("id-preview--") || host.includes("lovableproject.com");
@@ -82,6 +79,34 @@ function RootComponent() {
     }
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("/sw.js").catch(() => {});
+    }
+
+    // Preload all route JS chunks so they are cached by the SW for offline use.
+    // We do this by fetching each route HTML in the background which triggers
+    // the browser to discover and cache the associated JS/CSS assets.
+    const routePaths = ["/", "/login", "/missions", "/missions/new", "/allocations", "/custody", "/stats", "/settings"];
+    requestIdleCallback?.(() => {
+      for (const p of routePaths) {
+        const link = document.createElement("link");
+        link.rel = "prefetch";
+        link.href = p;
+        document.head.appendChild(link);
+      }
+    }) ?? setTimeout(() => {
+      for (const p of routePaths) {
+        fetch(p, { cache: "force-cache" }).catch(() => {});
+      }
+    }, 3000);
+
+    // Pre-cache font files as data URLs for offline PDF generation
+    const fontPaths = [
+      "/fonts/cairo-400-arabic.woff2",
+      "/fonts/cairo-700-arabic.woff2",
+      "/fonts/amiri-400-arabic.woff2",
+      "/fonts/amiri-700-arabic.woff2",
+    ];
+    for (const fp of fontPaths) {
+      fetch(fp, { cache: "force-cache" }).catch(() => {});
     }
   }, []);
   return <Outlet />;
