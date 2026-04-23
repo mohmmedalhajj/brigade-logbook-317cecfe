@@ -58,13 +58,89 @@ async function loadAsDataURL(url: string): Promise<string> {
   }
 }
 
-// Cache font data URLs so we only fetch once per session
-const fontCache: Record<string, string> = {};
-async function getFontDataURL(path: string): Promise<string> {
-  if (!fontCache[path]) {
-    fontCache[path] = await loadAsDataURL(path);
+// Persistent font cache using IndexedDB so fonts survive page reloads offline
+const memoryFontCache: Record<string, string> = {};
+
+async function getIDBFontCache(): Promise<Record<string, string>> {
+  try {
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const req = indexedDB.open("soqour-font-cache", 1);
+      req.onupgradeneeded = () => {
+        req.result.createObjectStore("fonts", { keyPath: "path" });
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+    const tx = db.transaction("fonts", "readonly");
+    const store = tx.objectStore("fonts");
+    const all = await new Promise<any[]>((resolve, reject) => {
+      const r = store.getAll();
+      r.onsuccess = () => resolve(r.result);
+      r.onerror = () => reject(r.error);
+    });
+    db.close();
+    const out: Record<string, string> = {};
+    for (const item of all) {
+      out[item.path] = item.dataUrl;
+    }
+    return out;
+  } catch {
+    return {};
   }
-  return fontCache[path];
+}
+
+async function saveIDBFont(path: string, dataUrl: string) {
+  try {
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const req = indexedDB.open("soqour-font-cache", 1);
+      req.onupgradeneeded = () => {
+        req.result.createObjectStore("fonts", { keyPath: "path" });
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+    const tx = db.transaction("fonts", "readwrite");
+    tx.objectStore("fonts").put({ path, dataUrl });
+    await new Promise<void>((resolve) => { tx.oncomplete = () => resolve(); });
+    db.close();
+  } catch {
+    // Ignore storage errors
+  }
+}
+
+async function getFontDataURL(path: string): Promise<string> {
+  // Check memory cache first
+  if (memoryFontCache[path]) return memoryFontCache[path];
+
+  // Try IndexedDB persistent cache
+  const idbCache = await getIDBFontCache();
+  if (idbCache[path]) {
+    memoryFontCache[path] = idbCache[path];
+    return idbCache[path];
+  }
+
+  // Fetch from network/SW cache
+  try {
+    const dataUrl = await loadAsDataURL(path);
+    if (dataUrl && dataUrl.startsWith("data:")) {
+      memoryFontCache[path] = dataUrl;
+      await saveIDBFont(path, dataUrl);
+    }
+    return dataUrl;
+  } catch {
+    return path;
+  }
+}
+
+// Pre-cache fonts proactively (call on app startup)
+export async function preCacheFonts() {
+  const paths = [
+    "/fonts/cairo-400-arabic.woff2",
+    "/fonts/cairo-700-arabic.woff2",
+    "/fonts/amiri-400-arabic.woff2",
+    "/fonts/amiri-700-arabic.woff2",
+  ];
+  await Promise.allSettled(paths.map((p) => getFontDataURL(p)));
 }
 
 export async function exportPDF(opts: PDFOptions) {
@@ -108,14 +184,24 @@ export async function exportPDF(opts: PDFOptions) {
 
     doc.body.appendChild(wrapper);
 
-    // Wait for fonts inside the iframe + small settle delay
+    // Wait for fonts inside the iframe + generous settle delay for offline
     if ((doc as any).fonts?.ready) {
-      try { await (doc as any).fonts.ready; } catch {}
+      try {
+        await Promise.race([
+          (doc as any).fonts.ready,
+          new Promise((r) => setTimeout(r, 3000)), // timeout after 3s
+        ]);
+      } catch {}
     }
-    await new Promise((r) => setTimeout(r, 250));
+    // Extra settle time for font rendering
+    await new Promise((r) => setTimeout(r, 500));
 
     // Resize iframe to fit content for accurate capture
-    iframe.style.height = `${wrapper.scrollHeight + 20}px`;
+    const contentHeight = wrapper.scrollHeight + 40;
+    iframe.style.height = `${contentHeight}px`;
+
+    // Wait for layout to settle after resize
+    await new Promise((r) => setTimeout(r, 200));
 
     const canvas = await html2canvas(wrapper, {
       scale: 2,
@@ -124,7 +210,9 @@ export async function exportPDF(opts: PDFOptions) {
       allowTaint: true,
       logging: false,
       windowWidth: 794,
-      windowHeight: wrapper.scrollHeight + 20,
+      windowHeight: contentHeight,
+      // Force the iframe's window/document for correct rendering context
+      ...(iframe.contentWindow ? { windowWidth: 794, windowHeight: contentHeight } : {}),
     });
 
     const imgData = canvas.toDataURL("image/jpeg", 0.92);
