@@ -43,7 +43,7 @@ function buildHtml({ title, subtitle, bodyHtml }: PDFOptions): HTMLDivElement {
   return wrapper;
 }
 
-async function loadImageAsDataURL(url: string): Promise<string> {
+async function loadAsDataURL(url: string): Promise<string> {
   try {
     const res = await fetch(url);
     const blob = await res.blob();
@@ -56,6 +56,15 @@ async function loadImageAsDataURL(url: string): Promise<string> {
   } catch {
     return url;
   }
+}
+
+// Cache font data URLs so we only fetch once per session
+const fontCache: Record<string, string> = {};
+async function getFontDataURL(path: string): Promise<string> {
+  if (!fontCache[path]) {
+    fontCache[path] = await loadAsDataURL(path);
+  }
+  return fontCache[path];
 }
 
 export async function exportPDF(opts: PDFOptions) {
