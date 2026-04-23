@@ -4,9 +4,13 @@ import { isAuthed } from "@/lib/auth";
 import { seedIfEmpty } from "@/lib/seed";
 import logo from "@/assets/logo.jpg";
 
+// Module-level flag: splash only on first app open
+let hasShownSplash = false;
+
 export function AuthGate({ children }: { children: React.ReactNode }) {
+  const isFirstLoad = !hasShownSplash;
   const [ready, setReady] = useState(false);
-  const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = useState(isFirstLoad);
   const nav = useNavigate();
 
   useEffect(() => {
@@ -18,7 +22,10 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
         nav({ to: "/login" });
       }
       setReady(true);
-      setTimeout(() => mounted && setShowSplash(false), 4000);
+      if (isFirstLoad) {
+        hasShownSplash = true;
+        setTimeout(() => mounted && setShowSplash(false), 4000);
+      }
     })();
     return () => { mounted = false; };
   }, [nav]);
