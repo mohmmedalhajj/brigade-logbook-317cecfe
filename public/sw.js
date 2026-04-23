@@ -1,11 +1,11 @@
-// Offline-first Service Worker for // Offline-first Service Worker for اللواء 35 مشاة
+// Offline-first Service Worker for اللواء 35 مشاة
 // Strategy:
 //  - Precache the app shell (HTML routes + manifest + icons + fonts).
 //  - Cache-first for static assets (JS/CSS/fonts/images) so the app boots
 //    instantly with zero network once installed.
 //  - Network-first with cache fallback for HTML navigations so updates
 //    are picked up when online, but the SPA shell still loads offline.
-const CACHE_NAME = "soqour-v5";
+const CACHE_NAME = "soqour-v6";
 const PRECACHE = [
   "/",
   "/login",
