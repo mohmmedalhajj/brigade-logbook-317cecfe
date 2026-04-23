@@ -22,7 +22,10 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
         nav({ to: "/login" });
       }
       setReady(true);
-      setTimeout(() => mounted && setShowSplash(false), 4000);
+      if (isFirstLoad) {
+        hasShownSplash = true;
+        setTimeout(() => mounted && setShowSplash(false), 4000);
+      }
     })();
     return () => { mounted = false; };
   }, [nav]);
