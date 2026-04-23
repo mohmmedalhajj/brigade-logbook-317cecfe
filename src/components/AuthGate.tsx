@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { isAuthed } from "@/lib/auth";
 import { seedIfEmpty } from "@/lib/seed";
+import { preCacheFonts } from "@/lib/pdf";
 import logo from "@/assets/logo.jpg";
 
 // Module-level flag: splash only on first app open
@@ -17,6 +18,8 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     let mounted = true;
     (async () => {
       try { await seedIfEmpty(); } catch {}
+      // Pre-cache fonts for offline PDF generation
+      preCacheFonts().catch(() => {});
       if (!mounted) return;
       if (!isAuthed()) {
         nav({ to: "/login" });
