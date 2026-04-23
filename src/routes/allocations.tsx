@@ -402,11 +402,11 @@ function StatsTab() {
       <Button onClick={exportMonthly} className="gap-1"><FileDown className="w-4 h-4" /> تقرير شهري PDF</Button>
       <div className="military-card rounded-xl p-4">
         <h3 className="font-bold text-gold mb-3">المحروقات (مسحوب)</h3>
-        <div className="h-56"><ResponsiveContainer><BarChart data={fuelData}><CartesianGrid strokeDasharray="3 3" stroke="#3a4a3a" /><XAxis dataKey="name" stroke="#9aa39a" /><YAxis stroke="#9aa39a" /><Tooltip /><Bar dataKey="value" fill="#a02828" /></BarChart></ResponsiveContainer></div>
+        <div className="h-56"><ResponsiveContainer><BarChart data={fuelData}><CartesianGrid strokeDasharray="3 3" stroke="#3a4a3a" /><XAxis dataKey="name" stroke="#9aa39a" /><YAxis stroke="#9aa39a" /><Tooltip contentStyle={{ backgroundColor: "#1a2e1a", border: "1px solid #3a4a3a", borderRadius: 8, color: "#e0e0e0" }} labelStyle={{ color: "#c9a84c" }} itemStyle={{ color: "#e0e0e0" }} /><Bar dataKey="value" fill="#a02828" /></BarChart></ResponsiveContainer></div>
       </div>
       <div className="military-card rounded-xl p-4">
         <h3 className="font-bold text-gold mb-3">القذائف</h3>
-        <div className="h-56"><ResponsiveContainer><BarChart data={shellData}><CartesianGrid strokeDasharray="3 3" stroke="#3a4a3a" /><XAxis dataKey="name" stroke="#9aa39a" /><YAxis stroke="#9aa39a" /><Tooltip /><Bar dataKey="value" fill="#4a7a4a" /></BarChart></ResponsiveContainer></div>
+        <div className="h-56"><ResponsiveContainer><BarChart data={shellData}><CartesianGrid strokeDasharray="3 3" stroke="#3a4a3a" /><XAxis dataKey="name" stroke="#9aa39a" /><YAxis stroke="#9aa39a" /><Tooltip contentStyle={{ backgroundColor: "#1a2e1a", border: "1px solid #3a4a3a", borderRadius: 8, color: "#e0e0e0" }} labelStyle={{ color: "#c9a84c" }} itemStyle={{ color: "#e0e0e0" }} /><Bar dataKey="value" fill="#4a7a4a" /></BarChart></ResponsiveContainer></div>
       </div>
     </div>
   );

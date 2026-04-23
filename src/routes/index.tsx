@@ -94,7 +94,7 @@ function Home() {
                     <Cell key={i} fill={COLORS[i % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip contentStyle={{ backgroundColor: "#1a2e1a", border: "1px solid #3a4a3a", borderRadius: 8, color: "#e0e0e0" }} labelStyle={{ color: "#c9a84c" }} itemStyle={{ color: "#e0e0e0" }} />
                 <Legend />
               </PieChart>
             </ResponsiveContainer>
@@ -114,7 +114,7 @@ function Home() {
               ).map(([name, value]) => ({ name, value }))}>
                 <XAxis dataKey="name" stroke="#9aa39a" fontSize={11} />
                 <YAxis stroke="#9aa39a" fontSize={11} />
-                <Tooltip />
+                <Tooltip contentStyle={{ backgroundColor: "#1a2e1a", border: "1px solid #3a4a3a", borderRadius: 8, color: "#e0e0e0" }} labelStyle={{ color: "#c9a84c" }} itemStyle={{ color: "#e0e0e0" }} />
                 <Bar dataKey="value" fill="#4a7a4a" />
               </BarChart>
             </ResponsiveContainer>
