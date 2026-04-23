@@ -1,4 +1,5 @@
-import { Link, useLocation } from "@tanstack/react-router";
+import { useRef, useCallback } from "react";
+import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { Home, ListTodo, BarChart3, Fuel, Package, Settings as SettingsIcon } from "lucide-react";
 import logo from "@/assets/logo.jpg";
 
@@ -11,8 +12,48 @@ const items = [
   { to: "/settings", label: "الإعدادات", icon: SettingsIcon },
 ] as const;
 
+function useSwipeNav() {
+  const navigate = useNavigate();
+  const loc = useLocation();
+  const touchRef = useRef<{ x: number; y: number; t: number } | null>(null);
+
+  const currentIndex = items.findIndex(
+    (it) => loc.pathname === it.to || (it.to !== "/" && loc.pathname.startsWith(it.to))
+  );
+
+  const onTouchStart = useCallback((e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    touchRef.current = { x: touch.clientX, y: touch.clientY, t: Date.now() };
+  }, []);
+
+  const onTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (!touchRef.current) return;
+    const touch = e.changedTouches[0];
+    const dx = touch.clientX - touchRef.current.x;
+    const dy = touch.clientY - touchRef.current.y;
+    const dt = Date.now() - touchRef.current.t;
+    touchRef.current = null;
+
+    // Must be horizontal swipe: |dx| > 60, |dy| < |dx|, < 400ms
+    if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx) || dt > 400) return;
+
+    const idx = currentIndex < 0 ? 0 : currentIndex;
+    // RTL: swipe left (dx < 0) = next tab, swipe right (dx > 0) = prev tab
+    // But in RTL, visual "next" is to the left, so swipe left = go to higher index
+    if (dx < 0 && idx < items.length - 1) {
+      navigate({ to: items[idx + 1].to });
+    } else if (dx > 0 && idx > 0) {
+      navigate({ to: items[idx - 1].to });
+    }
+  }, [currentIndex, navigate]);
+
+  return { onTouchStart, onTouchEnd };
+}
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const loc = useLocation();
+  const { onTouchStart, onTouchEnd } = useSwipeNav();
+
   return (
     <div className="min-h-screen flex flex-col">
       <header className="military-gradient border-b border-border sticky top-0 z-40 backdrop-blur">
@@ -25,7 +66,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      <main className="flex-1 max-w-5xl w-full mx-auto px-4 py-4 pb-24">{children}</main>
+      <main
+        className="flex-1 max-w-5xl w-full mx-auto px-4 py-4 pb-24"
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+      >
+        {children}
+      </main>
 
       <nav className="fixed bottom-0 inset-x-0 z-40 military-gradient border-t border-border">
         <div className="max-w-5xl mx-auto grid grid-cols-6">
