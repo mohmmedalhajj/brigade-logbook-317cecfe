@@ -43,7 +43,7 @@ function buildHtml({ title, subtitle, bodyHtml }: PDFOptions): HTMLDivElement {
   return wrapper;
 }
 
-async function loadImageAsDataURL(url: string): Promise<string> {
+async function loadAsDataURL(url: string): Promise<string> {
   try {
     const res = await fetch(url);
     const blob = await res.blob();
@@ -58,6 +58,15 @@ async function loadImageAsDataURL(url: string): Promise<string> {
   }
 }
 
+// Cache font data URLs so we only fetch once per session
+const fontCache: Record<string, string> = {};
+async function getFontDataURL(path: string): Promise<string> {
+  if (!fontCache[path]) {
+    fontCache[path] = await loadAsDataURL(path);
+  }
+  return fontCache[path];
+}
+
 export async function exportPDF(opts: PDFOptions) {
   // Render inside a sandboxed iframe so the project's CSS (which uses oklch()
   // color tokens) cannot leak into html2canvas — html2canvas cannot parse oklch.
@@ -65,15 +74,23 @@ export async function exportPDF(opts: PDFOptions) {
   iframe.style.cssText = "position:fixed; top:-10000px; left:0; width:794px; height:10px; border:0;";
   document.body.appendChild(iframe);
 
+  // Pre-load fonts as data URLs for offline support
+  const [cairo400, cairo700, amiri400, amiri700] = await Promise.all([
+    getFontDataURL("/fonts/cairo-400-arabic.woff2"),
+    getFontDataURL("/fonts/cairo-700-arabic.woff2"),
+    getFontDataURL("/fonts/amiri-400-arabic.woff2"),
+    getFontDataURL("/fonts/amiri-700-arabic.woff2"),
+  ]);
+
   try {
     const doc = iframe.contentDocument!;
     doc.open();
     doc.write(`<!DOCTYPE html><html dir="rtl"><head><meta charset="utf-8">
       <style>
-        @font-face { font-family:"Cairo"; font-weight:400; src:url("/fonts/cairo-400-arabic.woff2") format("woff2"); }
-        @font-face { font-family:"Cairo"; font-weight:700; src:url("/fonts/cairo-700-arabic.woff2") format("woff2"); }
-        @font-face { font-family:"Amiri"; font-weight:400; src:url("/fonts/amiri-400-arabic.woff2") format("woff2"); }
-        @font-face { font-family:"Amiri"; font-weight:700; src:url("/fonts/amiri-700-arabic.woff2") format("woff2"); }
+        @font-face { font-family:"Cairo"; font-weight:400; src:url("${cairo400}") format("woff2"); }
+        @font-face { font-family:"Cairo"; font-weight:700; src:url("${cairo700}") format("woff2"); }
+        @font-face { font-family:"Amiri"; font-weight:400; src:url("${amiri400}") format("woff2"); }
+        @font-face { font-family:"Amiri"; font-weight:700; src:url("${amiri700}") format("woff2"); }
         *,*::before,*::after{box-sizing:border-box;}
         html,body{margin:0;padding:0;background:#ffffff;color:#111;font-family:"Cairo","Segoe UI",Tahoma,Arial,sans-serif;direction:rtl;}
       </style>
@@ -81,12 +98,11 @@ export async function exportPDF(opts: PDFOptions) {
     doc.close();
 
     const wrapper = buildHtml(opts);
-    // Strip the off-screen positioning since the iframe itself is hidden
     wrapper.style.position = "static";
     wrapper.style.top = "auto";
 
     // Ensure logo is embedded as data URL so it loads inside the iframe
-    const logoDataUrl = await loadImageAsDataURL(logoUrl);
+    const logoDataUrl = await loadAsDataURL(logoUrl);
     const img = wrapper.querySelector("img");
     if (img) img.src = logoDataUrl;
 
