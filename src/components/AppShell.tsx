@@ -38,11 +38,10 @@ function useSwipeNav() {
     if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx) || dt > 400) return;
 
     const idx = currentIndex < 0 ? 0 : currentIndex;
-    // RTL: swipe left (dx < 0) = next tab, swipe right (dx > 0) = prev tab
-    // But in RTL, visual "next" is to the left, so swipe left = go to higher index
-    if (dx < 0 && idx < items.length - 1) {
+    // RTL: swipe right (dx > 0) = next tab, swipe left (dx < 0) = prev tab
+    if (dx > 0 && idx < items.length - 1) {
       navigate({ to: items[idx + 1].to });
-    } else if (dx > 0 && idx > 0) {
+    } else if (dx < 0 && idx > 0) {
       navigate({ to: items[idx - 1].to });
     }
   }, [currentIndex, navigate]);
