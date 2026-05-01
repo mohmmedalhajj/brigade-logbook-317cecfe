@@ -1,4 +1,14 @@
 import { openDB, type IDBPDatabase } from "idb";
+import { Capacitor } from "@capacitor/core";
+import {
+  CapacitorSQLite,
+  SQLiteConnection,
+  type SQLiteDBConnection,
+} from "@capacitor-community/sqlite";
+
+// ============================================================
+// Type definitions (unchanged public API)
+// ============================================================
 
 export interface MissionAttachment {
   type: "image" | "video";
@@ -71,64 +81,156 @@ export interface Backup {
   createdAt: number;
 }
 
+// ============================================================
+// Backend selection — SQLite on native (APK), IndexedDB on web
+// ============================================================
+
 const DB_NAME = "soqour-db";
 const DB_VERSION = 1;
 
-let dbPromise: Promise<IDBPDatabase> | null = null;
+const STORES = [
+  "missions",
+  "fuel",
+  "shells",
+  "custody",
+  "missionTypes",
+  "executors",
+  "backups",
+  "settings",
+] as const;
+type StoreName = (typeof STORES)[number];
 
-export function getDB() {
+const KEY_FIELD: Record<StoreName, string> = {
+  missions: "id",
+  fuel: "id",
+  shells: "id",
+  custody: "id",
+  missionTypes: "id",
+  executors: "id",
+  backups: "id",
+  settings: "key",
+};
+
+const isNative = (): boolean => {
+  try {
+    return Capacitor.isNativePlatform();
+  } catch {
+    return false;
+  }
+};
+
+// ---------- SQLite (native) ----------
+let sqliteConn: SQLiteDBConnection | null = null;
+let sqlitePromise: Promise<SQLiteDBConnection> | null = null;
+
+async function getSqlite(): Promise<SQLiteDBConnection> {
+  if (sqliteConn) return sqliteConn;
+  if (sqlitePromise) return sqlitePromise;
+  sqlitePromise = (async () => {
+    const sqlite = new SQLiteConnection(CapacitorSQLite);
+    const ret = await sqlite.checkConnectionsConsistency();
+    const isConn = (await sqlite.isConnection(DB_NAME, false)).result;
+    let db: SQLiteDBConnection;
+    if (ret.result && isConn) {
+      db = await sqlite.retrieveConnection(DB_NAME, false);
+    } else {
+      db = await sqlite.createConnection(DB_NAME, false, "no-encryption", DB_VERSION, false);
+    }
+    await db.open();
+    // Create tables: every store is a simple key/value store of JSON blobs.
+    const stmts = STORES.map(
+      (s) => `CREATE TABLE IF NOT EXISTS ${s} (key TEXT PRIMARY KEY NOT NULL, value TEXT NOT NULL);`
+    ).join("\n");
+    await db.execute(stmts);
+    sqliteConn = db;
+    return db;
+  })();
+  return sqlitePromise;
+}
+
+// ---------- IndexedDB (web) ----------
+let idbPromise: Promise<IDBPDatabase> | null = null;
+
+function getIdb() {
   if (typeof window === "undefined") return Promise.reject(new Error("no window"));
-  if (!dbPromise) {
-    dbPromise = openDB(DB_NAME, DB_VERSION, {
+  if (!idbPromise) {
+    idbPromise = openDB(DB_NAME, DB_VERSION, {
       upgrade(db) {
-        if (!db.objectStoreNames.contains("missions")) {
-          db.createObjectStore("missions", { keyPath: "id" });
-        }
-        if (!db.objectStoreNames.contains("fuel")) {
-          db.createObjectStore("fuel", { keyPath: "id" });
-        }
-        if (!db.objectStoreNames.contains("shells")) {
-          db.createObjectStore("shells", { keyPath: "id" });
-        }
-        if (!db.objectStoreNames.contains("custody")) {
-          db.createObjectStore("custody", { keyPath: "id" });
-        }
-        if (!db.objectStoreNames.contains("missionTypes")) {
-          db.createObjectStore("missionTypes", { keyPath: "id" });
-        }
-        if (!db.objectStoreNames.contains("executors")) {
-          db.createObjectStore("executors", { keyPath: "id" });
-        }
-        if (!db.objectStoreNames.contains("backups")) {
-          db.createObjectStore("backups", { keyPath: "id" });
-        }
-        if (!db.objectStoreNames.contains("settings")) {
-          db.createObjectStore("settings", { keyPath: "key" });
+        for (const s of STORES) {
+          if (!db.objectStoreNames.contains(s)) {
+            db.createObjectStore(s, { keyPath: KEY_FIELD[s] });
+          }
         }
       },
     });
   }
-  return dbPromise;
+  return idbPromise;
 }
 
+// Expose getDB for any legacy callers — only meaningful on web.
+export function getDB() {
+  return getIdb();
+}
+
+// ============================================================
+// Unified CRUD API
+// ============================================================
+
 export async function getAll<T>(store: string): Promise<T[]> {
-  const db = await getDB();
+  if (isNative()) {
+    const db = await getSqlite();
+    const res = await db.query(`SELECT value FROM ${store};`);
+    const rows = res.values || [];
+    return rows.map((r: any) => JSON.parse(r.value)) as T[];
+  }
+  const db = await getIdb();
   return db.getAll(store);
 }
-export async function put<T>(store: string, value: T) {
-  const db = await getDB();
+
+export async function put<T extends Record<string, any>>(store: string, value: T) {
+  if (isNative()) {
+    const db = await getSqlite();
+    const keyField = KEY_FIELD[store as StoreName] || "id";
+    const key = String(value[keyField]);
+    const json = JSON.stringify(value);
+    await db.run(
+      `INSERT OR REPLACE INTO ${store} (key, value) VALUES (?, ?);`,
+      [key, json]
+    );
+    return key;
+  }
+  const db = await getIdb();
   return db.put(store, value);
 }
+
 export async function del(store: string, key: string) {
-  const db = await getDB();
+  if (isNative()) {
+    const db = await getSqlite();
+    await db.run(`DELETE FROM ${store} WHERE key = ?;`, [key]);
+    return;
+  }
+  const db = await getIdb();
   return db.delete(store, key);
 }
+
 export async function get<T>(store: string, key: string): Promise<T | undefined> {
-  const db = await getDB();
+  if (isNative()) {
+    const db = await getSqlite();
+    const res = await db.query(`SELECT value FROM ${store} WHERE key = ?;`, [key]);
+    const row = (res.values || [])[0];
+    return row ? (JSON.parse(row.value) as T) : undefined;
+  }
+  const db = await getIdb();
   return db.get(store, key);
 }
+
 export async function clear(store: string) {
-  const db = await getDB();
+  if (isNative()) {
+    const db = await getSqlite();
+    await db.execute(`DELETE FROM ${store};`);
+    return;
+  }
+  const db = await getIdb();
   return db.clear(store);
 }
 
@@ -137,24 +239,20 @@ export function uid() {
 }
 
 export async function exportAll() {
-  const db = await getDB();
-  const stores = ["missions", "fuel", "shells", "custody", "missionTypes", "executors", "settings"];
+  const stores: StoreName[] = ["missions", "fuel", "shells", "custody", "missionTypes", "executors", "settings"];
   const out: Record<string, any[]> = {};
   for (const s of stores) {
-    out[s] = await db.getAll(s);
+    out[s] = await getAll(s);
   }
   return out;
 }
 
 export async function importAll(data: Record<string, any[]>) {
-  const db = await getDB();
   for (const [store, items] of Object.entries(data)) {
-    if (!db.objectStoreNames.contains(store)) continue;
-    const tx = db.transaction(store, "readwrite");
-    await tx.store.clear();
+    if (!STORES.includes(store as StoreName)) continue;
+    await clear(store);
     for (const item of items) {
-      await tx.store.put(item);
+      await put(store, item);
     }
-    await tx.done;
   }
 }
