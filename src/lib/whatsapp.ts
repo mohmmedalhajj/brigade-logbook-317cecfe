@@ -148,7 +148,8 @@ export function generateWhatsApp(mission: MissionBase, executorName: string): st
 
   const lines = [
     HEADER,
-    executor,
+    `القطاع: ${executor}`,
+    `الفرقة المنفذة: ${team}`,
     `الموضوع تقرير ${typeName || "مهمة"}`,
     "",
     "تفاصيل المهمة",
