@@ -84,9 +84,9 @@ export const BUILTIN_TYPES: MissionType[] = [
 ];
 
 export const BUILTIN_EXECUTORS: Executor[] = [
-  { id: "ex1", name: "محور البرح", builtin: true },
-  { id: "ex2", name: "محور حيفان", builtin: true },
-  { id: "ex3", name: "محور حيس", builtin: true },
+  { id: "ex1", name: "قطاع حيفان", builtin: true },
+  { id: "ex2", name: "قطاع البرح", builtin: true },
+  { id: "ex3", name: "قطاع حيس", builtin: true },
 ];
 
 export async function seedIfEmpty() {
@@ -97,5 +97,13 @@ export async function seedIfEmpty() {
   const execs = await getAll<Executor>("executors");
   if (execs.length === 0) {
     for (const e of BUILTIN_EXECUTORS) await put("executors", e);
+  } else {
+    // Migration: rename legacy "محور ..." builtin entries to "قطاع ..."
+    for (const e of execs) {
+      if (e.builtin && e.name.startsWith("محور ")) {
+        const newName = e.name.replace(/^محور\s+/, "قطاع ");
+        await put("executors", { ...e, name: newName });
+      }
+    }
   }
 }

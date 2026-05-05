@@ -19,11 +19,12 @@ function numberedList(text: string): string {
 export function generateWhatsApp(mission: MissionBase, executorName: string): string {
   const d = mission.data;
   const executor = executorName || mission.executor || "";
-
+  const team = (mission as any).team || "";
   if (mission.type === "recon") {
     return [
       HEADER,
-      executor,
+      `القطاع: ${executor}`,
+      `الفرقة المنفذة: ${team}`,
       "الموضوع تقرير مهمة",
       "",
       "تفاصيل المهمة",
@@ -65,7 +66,8 @@ export function generateWhatsApp(mission: MissionBase, executorName: string): st
       : "";
     return [
       HEADER,
-      executor,
+      `القطاع: ${executor}`,
+      `الفرقة المنفذة: ${team}`,
       "الموضوع تقرير مهمة",
       "",
       "تفاصيل المهمة",
@@ -93,7 +95,8 @@ export function generateWhatsApp(mission: MissionBase, executorName: string): st
   if (mission.type === "artillery") {
     return [
       HEADER,
-      executor,
+      `القطاع: ${executor}`,
+      `الفرقة المنفذة: ${team}`,
       "الموضوع تقرير مهمة تصحيح مدفعي",
       "",
       "تفاصيل المهمة",
@@ -115,7 +118,8 @@ export function generateWhatsApp(mission: MissionBase, executorName: string): st
   if (mission.type === "jamming") {
     return [
       HEADER,
-      executor,
+      `القطاع: ${executor}`,
+      `الفرقة المنفذة: ${team}`,
       "الموضوع تقرير تشويش",
       "",
       "تفاصيل المهمة",
@@ -144,7 +148,8 @@ export function generateWhatsApp(mission: MissionBase, executorName: string): st
 
   const lines = [
     HEADER,
-    executor,
+    `القطاع: ${executor}`,
+    `الفرقة المنفذة: ${team}`,
     `الموضوع تقرير ${typeName || "مهمة"}`,
     "",
     "تفاصيل المهمة",

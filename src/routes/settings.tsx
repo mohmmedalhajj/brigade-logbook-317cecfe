@@ -34,15 +34,17 @@ function Settings() {
       </div>
       <InstallAppButton />
       <Tabs defaultValue="types">
-        <TabsList className="grid grid-cols-4 w-full gap-1 p-1">
-          <TabsTrigger value="types" className="text-xs px-2 py-1.5">أنواع المهام</TabsTrigger>
-          <TabsTrigger value="shells" className="text-xs px-2 py-1.5">القذائف</TabsTrigger>
-          <TabsTrigger value="executors" className="text-xs px-2 py-1.5">الجهة المنفذة</TabsTrigger>
-          <TabsTrigger value="backup" className="text-xs px-2 py-1.5">النسخ الاحتياطي</TabsTrigger>
+        <TabsList className="grid grid-cols-5 w-full gap-1 p-1">
+          <TabsTrigger value="types" className="text-xs px-1 py-1.5">المهام</TabsTrigger>
+          <TabsTrigger value="shells" className="text-xs px-1 py-1.5">القذائف</TabsTrigger>
+          <TabsTrigger value="executors" className="text-xs px-1 py-1.5">القطاع</TabsTrigger>
+          <TabsTrigger value="teams" className="text-xs px-1 py-1.5">الفرق</TabsTrigger>
+          <TabsTrigger value="backup" className="text-xs px-1 py-1.5">النسخ</TabsTrigger>
         </TabsList>
         <TabsContent value="types"><TypesTab /></TabsContent>
         <TabsContent value="shells"><ShellTypesTab /></TabsContent>
         <TabsContent value="executors"><ExecutorsTab /></TabsContent>
+        <TabsContent value="teams"><TeamsTab /></TabsContent>
         <TabsContent value="backup"><BackupTab /></TabsContent>
       </Tabs>
 
@@ -212,7 +214,7 @@ function ExecutorsTab() {
   return (
     <div className="space-y-3">
       <div className="flex gap-2">
-        <Input placeholder="اسم الجهة المنفذة" value={name} onChange={(e) => setName(e.target.value)} />
+        <Input placeholder="اسم القطاع" value={name} onChange={(e) => setName(e.target.value)} />
         <Button onClick={add} className="bg-primary"><Plus className="w-4 h-4" /></Button>
       </div>
       {items.map((e) => (
@@ -243,6 +245,61 @@ function ExecutorsTab() {
           <AlertDialogFooter>
             <AlertDialogCancel>إلغاء</AlertDialogCancel>
             <AlertDialogAction className="bg-destructive" onClick={async () => { if (delId) { await del("executors", delId); setDelId(null); load(); }}}>حذف</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
+
+function TeamsTab() {
+  const [items, setItems] = useState<string[]>([]);
+  const [name, setName] = useState("");
+  const [delIdx, setDelIdx] = useState<number | null>(null);
+
+  async function load() {
+    const saved = await get<{ key: string; value: string[] }>("settings", "teams");
+    setItems(saved?.value || []);
+  }
+  useEffect(() => { load(); }, []);
+
+  async function saveItems(newItems: string[]) {
+    await put("settings", { key: "teams", value: newItems });
+    setItems(newItems);
+  }
+  async function add() {
+    const v = name.trim();
+    if (!v || items.includes(v)) return;
+    await saveItems([...items, v]);
+    setName("");
+  }
+  async function remove(idx: number) {
+    await saveItems(items.filter((_, i) => i !== idx));
+    setDelIdx(null);
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="text-xs text-muted-foreground">
+        أضف الفرق التي تنفذ المهام (مثال: الفرقة الأولى، الفرقة الثانية...). يتم اختيار الفرقة عند إضافة مهمة وتظهر في التقرير المطبوع.
+      </div>
+      <div className="flex gap-2">
+        <Input placeholder="اسم الفرقة (مثال: الفرقة الأولى)" value={name} onChange={(e) => setName(e.target.value)} />
+        <Button onClick={add} className="bg-primary"><Plus className="w-4 h-4" /></Button>
+      </div>
+      {items.length === 0 && <div className="text-center text-muted-foreground text-sm py-4">لم تتم إضافة فرق بعد</div>}
+      {items.map((item, idx) => (
+        <div key={idx} className="military-card rounded-xl p-3 flex justify-between items-center">
+          <span>{item}</span>
+          <Button size="sm" variant="destructive" onClick={() => setDelIdx(idx)}><Trash2 className="w-3 h-3" /></Button>
+        </div>
+      ))}
+      <AlertDialog open={delIdx !== null} onOpenChange={(o) => !o && setDelIdx(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader><AlertDialogTitle>حذف</AlertDialogTitle><AlertDialogDescription>حذف هذه الفرقة؟</AlertDialogDescription></AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction className="bg-destructive" onClick={() => { if (delIdx !== null) remove(delIdx); }}>حذف</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

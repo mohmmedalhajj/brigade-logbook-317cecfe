@@ -23,6 +23,7 @@ export interface MissionBase {
   date: string;
   createdAt: number;
   executor?: string;
+  team?: string;
   data: Record<string, any>;
   attachments?: MissionAttachment[];
 }

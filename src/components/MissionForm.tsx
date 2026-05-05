@@ -4,7 +4,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { getAll, put, uid, type MissionBase, type MissionType, type Executor, type MissionAttachment } from "@/lib/db";
+import { getAll, put, get, uid, type MissionBase, type MissionType, type Executor, type MissionAttachment } from "@/lib/db";
 import { useNavigate } from "@tanstack/react-router";
 import { Plus, Trash2, Save, ImagePlus, Video, X } from "lucide-react";
 import { toast } from "sonner";
@@ -15,7 +15,8 @@ interface Props {
 }
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
-const MAX_ATTACHMENTS = 5;
+const MAX_IMAGES = 12;
+const MAX_VIDEOS = 12;
 
 function fileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -30,8 +31,10 @@ export function MissionForm({ existingId, initialType }: Props) {
   const nav = useNavigate();
   const [types, setTypes] = useState<MissionType[]>([]);
   const [execs, setExecs] = useState<Executor[]>([]);
+  const [teams, setTeams] = useState<string[]>([]);
   const [typeId, setTypeId] = useState<string>(initialType || "recon");
   const [executor, setExecutor] = useState<string>("");
+  const [team, setTeam] = useState<string>("");
   const [data, setData] = useState<Record<string, any>>({ date: todayISO() });
   const [targets, setTargets] = useState<any[]>([]);
   const [attachments, setAttachments] = useState<MissionAttachment[]>([]);
@@ -41,18 +44,25 @@ export function MissionForm({ existingId, initialType }: Props) {
   const imgInputRef = useRef<HTMLInputElement>(null);
   const vidInputRef = useRef<HTMLInputElement>(null);
 
+  const imageCount = attachments.filter((a) => a.type === "image").length;
+  const videoCount = attachments.filter((a) => a.type === "video").length;
+  const allowVideo = typeId === "strike";
+
   useEffect(() => {
     (async () => {
       const t = await getAll<MissionType>("missionTypes");
       const e = await getAll<Executor>("executors");
+      const teamsSaved = await get<{ key: string; value: string[] }>("settings", "teams");
       setTypes(t);
       setExecs(e);
+      setTeams(teamsSaved?.value || []);
       if (existingId) {
         const all = await getAll<MissionBase>("missions");
         const m = all.find((x) => x.id === existingId);
         if (m) {
           setTypeId(m.type);
           setExecutor(m.executor || "");
+          setTeam((m as any).team || "");
           setData(m.data || {});
           setTargets(Array.isArray(m.data?.targets) ? m.data.targets : []);
           setAttachments(m.attachments || []);
@@ -80,13 +90,14 @@ export function MissionForm({ existingId, initialType }: Props) {
         date: data.date || todayISO(),
         createdAt: Date.now(),
         executor,
+        team,
         data: finalData,
         attachments,
       };
       await put("missions", obj);
       if (!missionId) setMissionId(id);
     }, 500);
-  }, [data, targets, typeId, executor, loaded, missionId, attachments]);
+  }, [data, targets, typeId, executor, team, loaded, missionId, attachments]);
 
   const currentType = types.find((t) => t.id === typeId);
 
@@ -106,9 +117,9 @@ export function MissionForm({ existingId, initialType }: Props) {
 
   async function handleImageFiles(files: FileList | null) {
     if (!files) return;
-    const remaining = MAX_ATTACHMENTS - attachments.length;
+    const remaining = MAX_IMAGES - imageCount;
     if (remaining <= 0) {
-      toast.error(`الحد الأقصى ${MAX_ATTACHMENTS} مرفقات`);
+      toast.error(`الحد الأقصى ${MAX_IMAGES} صور`);
       return;
     }
     const toAdd = Array.from(files).slice(0, remaining);
@@ -124,24 +135,32 @@ export function MissionForm({ existingId, initialType }: Props) {
     setAttachments((prev) => [...prev, ...newAttachments]);
   }
 
-  async function handleVideoFile(files: FileList | null) {
-    if (!files || !files[0]) return;
-    const remaining = MAX_ATTACHMENTS - attachments.length;
+  async function handleVideoFiles(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    if (!allowVideo) {
+      toast.error("الفيديو متاح فقط لمهام الاستهداف");
+      return;
+    }
+    const remaining = MAX_VIDEOS - videoCount;
     if (remaining <= 0) {
-      toast.error(`الحد الأقصى ${MAX_ATTACHMENTS} مرفقات`);
+      toast.error(`الحد الأقصى ${MAX_VIDEOS} فيديو`);
       return;
     }
-    const f = files[0];
-    if (f.size > 50 * 1024 * 1024) {
-      toast.error("حجم الفيديو كبير جداً (الحد 50 ميجا)");
-      return;
+    const toAdd = Array.from(files).slice(0, remaining);
+    const newAttachments: MissionAttachment[] = [];
+    for (const f of toAdd) {
+      if (f.size > 50 * 1024 * 1024) {
+        toast.error(`${f.name}: حجم الفيديو كبير (الحد 50 ميجا)`);
+        continue;
+      }
+      try {
+        const dataUrl = await fileToDataUrl(f);
+        newAttachments.push({ type: "video", dataUrl, name: f.name });
+      } catch {
+        toast.error(`فشل تحميل ${f.name}`);
+      }
     }
-    try {
-      const dataUrl = await fileToDataUrl(f);
-      setAttachments((prev) => [...prev, { type: "video", dataUrl, name: f.name }]);
-    } catch {
-      toast.error("فشل تحميل الفيديو");
-    }
+    setAttachments((prev) => [...prev, ...newAttachments]);
   }
 
   function removeAttachment(i: number) {
@@ -163,15 +182,30 @@ export function MissionForm({ existingId, initialType }: Props) {
           </Select>
         </div>
         <div>
-          <Label className="mb-1 block">الجهة المنفذة</Label>
+          <Label className="mb-1 block">القطاع</Label>
           <Select value={executor} onValueChange={setExecutor}>
-            <SelectTrigger><SelectValue placeholder="اختر..." /></SelectTrigger>
+            <SelectTrigger><SelectValue placeholder="اختر القطاع..." /></SelectTrigger>
             <SelectContent>
               {execs.map((e) => (
                 <SelectItem key={e.id} value={e.name}>{e.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
+        </div>
+        <div className="col-span-2">
+          <Label className="mb-1 block">الفرقة المنفذة</Label>
+          {teams.length > 0 ? (
+            <Select value={team} onValueChange={setTeam}>
+              <SelectTrigger><SelectValue placeholder="اختر الفرقة..." /></SelectTrigger>
+              <SelectContent>
+                {teams.map((tm) => (
+                  <SelectItem key={tm} value={tm}>{tm}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <Input value={team} onChange={(e) => setTeam(e.target.value)} placeholder="أضف الفرق من الإعدادات أو اكتب يدوياً" />
+          )}
         </div>
       </div>
 
@@ -234,7 +268,10 @@ export function MissionForm({ existingId, initialType }: Props) {
         <h3 className="font-bold text-gold flex items-center gap-2">
           <ImagePlus className="w-4 h-4" /> المرفقات (اختياري)
         </h3>
-        <p className="text-xs text-muted-foreground">يمكنك إرفاق حتى {MAX_ATTACHMENTS} صور أو فيديو</p>
+        <p className="text-xs text-muted-foreground">
+          الصور: {imageCount}/{MAX_IMAGES}
+          {allowVideo && ` • الفيديو: ${videoCount}/${MAX_VIDEOS}`}
+        </p>
 
         {attachments.length > 0 && (
           <div className="grid grid-cols-3 gap-2">
@@ -253,15 +290,15 @@ export function MissionForm({ existingId, initialType }: Props) {
                   <X className="w-3 h-3" />
                 </button>
                 <div className="absolute bottom-0 inset-x-0 bg-black/60 text-white text-[10px] text-center py-0.5">
-                  {att.type === "image" ? "صورة" : "فيديو"} {i + 1}
+                  {att.type === "image" ? "صورة" : "فيديو"}
                 </div>
               </div>
             ))}
           </div>
         )}
 
-        {attachments.length < MAX_ATTACHMENTS && (
-          <div className="flex gap-2">
+        <div className="flex gap-2">
+          {imageCount < MAX_IMAGES && (
             <Button
               type="button"
               variant="secondary"
@@ -271,6 +308,8 @@ export function MissionForm({ existingId, initialType }: Props) {
             >
               <ImagePlus className="w-4 h-4" /> إضافة صور
             </Button>
+          )}
+          {allowVideo && videoCount < MAX_VIDEOS && (
             <Button
               type="button"
               variant="secondary"
@@ -280,23 +319,24 @@ export function MissionForm({ existingId, initialType }: Props) {
             >
               <Video className="w-4 h-4" /> إضافة فيديو
             </Button>
-            <input
-              ref={imgInputRef}
-              type="file"
-              accept="image/*"
-              multiple
-              className="hidden"
-              onChange={(e) => { handleImageFiles(e.target.files); e.target.value = ""; }}
-            />
-            <input
-              ref={vidInputRef}
-              type="file"
-              accept="video/*"
-              className="hidden"
-              onChange={(e) => { handleVideoFile(e.target.files); e.target.value = ""; }}
-            />
-          </div>
-        )}
+          )}
+          <input
+            ref={imgInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={(e) => { handleImageFiles(e.target.files); e.target.value = ""; }}
+          />
+          <input
+            ref={vidInputRef}
+            type="file"
+            accept="video/*"
+            multiple
+            className="hidden"
+            onChange={(e) => { handleVideoFiles(e.target.files); e.target.value = ""; }}
+          />
+        </div>
       </div>
 
       <div className="text-xs text-center text-muted-foreground">
@@ -318,6 +358,7 @@ export function MissionForm({ existingId, initialType }: Props) {
             date: data.date || todayISO(),
             createdAt: Date.now(),
             executor,
+            team,
             data: finalData,
             attachments,
           };

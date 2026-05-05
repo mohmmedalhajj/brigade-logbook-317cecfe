@@ -41,14 +41,28 @@ const BUILTIN_LABELS: Record<string, string> = {
 };
 
 function attachmentsHtml(attachments?: MissionAttachment[]): string {
-  const images = (attachments || []).filter((a) => a.type === "image");
-  if (images.length === 0) return "";
-  let html = `<h3 style="color:#2d4a2d; margin-top:20px;">المرفقات (${images.length} صورة)</h3>`;
-  html += `<div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:8px;">`;
-  for (const att of images) {
-    html += `<img src="${att.dataUrl}" style="width:220px; height:auto; border:2px solid #2d4a2d; border-radius:8px; object-fit:cover;" crossorigin="anonymous" />`;
+  const list = attachments || [];
+  const images = list.filter((a) => a.type === "image");
+  const videos = list.filter((a) => a.type === "video");
+  let html = "";
+  if (images.length > 0) {
+    html += `<h3 style="color:#2d4a2d; margin-top:20px;">المرفقات - الصور (${images.length})</h3>`;
+    html += `<div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:8px;">`;
+    for (const att of images) {
+      html += `<img src="${att.dataUrl}" style="width:220px; height:auto; border:2px solid #2d4a2d; border-radius:8px; object-fit:cover;" crossorigin="anonymous" />`;
+    }
+    html += `</div>`;
   }
-  html += `</div>`;
+  if (videos.length > 0) {
+    html += `<h3 style="color:#2d4a2d; margin-top:20px;">المرفقات - مقاطع الفيديو (${videos.length})</h3>`;
+    html += `<ul style="margin-top:8px;">`;
+    for (let i = 0; i < videos.length; i++) {
+      const v = videos[i];
+      html += `<li style="margin:4px 0;">${htmlEscape(v.name || `فيديو ${i + 1}`)}</li>`;
+    }
+    html += `</ul>`;
+    html += `<div style="font-size:11px; color:#555; margin-top:4px;">يتم إرسال مقاطع الفيديو مع التقرير عبر تطبيق المراسلة.</div>`;
+  }
   return html;
 }
 
@@ -178,6 +192,14 @@ export async function missionToPDF(m: MissionBase, executorName: string) {
         })
     );
   }
+
+  // Prepend القطاع / الفرقة header
+  const teamName = (m as any).team || "";
+  const headerHtml = htmlKV([
+    ["القطاع", executorName],
+    ["الفرقة المنفذة", teamName],
+  ]);
+  body = headerHtml + body;
 
   // Add image attachments for all mission types
   body += attachmentsHtml(m.attachments);
