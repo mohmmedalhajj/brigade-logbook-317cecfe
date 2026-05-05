@@ -4,7 +4,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { getAll, put, uid, type MissionBase, type MissionType, type Executor, type MissionAttachment } from "@/lib/db";
+import { getAll, put, get, uid, type MissionBase, type MissionType, type Executor, type MissionAttachment } from "@/lib/db";
 import { useNavigate } from "@tanstack/react-router";
 import { Plus, Trash2, Save, ImagePlus, Video, X } from "lucide-react";
 import { toast } from "sonner";
@@ -15,7 +15,8 @@ interface Props {
 }
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
-const MAX_ATTACHMENTS = 5;
+const MAX_IMAGES = 12;
+const MAX_VIDEOS = 12;
 
 function fileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
