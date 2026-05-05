@@ -253,7 +253,10 @@ export function MissionForm({ existingId, initialType }: Props) {
         <h3 className="font-bold text-gold flex items-center gap-2">
           <ImagePlus className="w-4 h-4" /> المرفقات (اختياري)
         </h3>
-        <p className="text-xs text-muted-foreground">يمكنك إرفاق حتى {MAX_ATTACHMENTS} صور أو فيديو</p>
+        <p className="text-xs text-muted-foreground">
+          الصور: {imageCount}/{MAX_IMAGES}
+          {allowVideo && ` • الفيديو: ${videoCount}/${MAX_VIDEOS}`}
+        </p>
 
         {attachments.length > 0 && (
           <div className="grid grid-cols-3 gap-2">
@@ -272,15 +275,15 @@ export function MissionForm({ existingId, initialType }: Props) {
                   <X className="w-3 h-3" />
                 </button>
                 <div className="absolute bottom-0 inset-x-0 bg-black/60 text-white text-[10px] text-center py-0.5">
-                  {att.type === "image" ? "صورة" : "فيديو"} {i + 1}
+                  {att.type === "image" ? "صورة" : "فيديو"}
                 </div>
               </div>
             ))}
           </div>
         )}
 
-        {attachments.length < MAX_ATTACHMENTS && (
-          <div className="flex gap-2">
+        <div className="flex gap-2">
+          {imageCount < MAX_IMAGES && (
             <Button
               type="button"
               variant="secondary"
@@ -290,6 +293,8 @@ export function MissionForm({ existingId, initialType }: Props) {
             >
               <ImagePlus className="w-4 h-4" /> إضافة صور
             </Button>
+          )}
+          {allowVideo && videoCount < MAX_VIDEOS && (
             <Button
               type="button"
               variant="secondary"
@@ -299,23 +304,24 @@ export function MissionForm({ existingId, initialType }: Props) {
             >
               <Video className="w-4 h-4" /> إضافة فيديو
             </Button>
-            <input
-              ref={imgInputRef}
-              type="file"
-              accept="image/*"
-              multiple
-              className="hidden"
-              onChange={(e) => { handleImageFiles(e.target.files); e.target.value = ""; }}
-            />
-            <input
-              ref={vidInputRef}
-              type="file"
-              accept="video/*"
-              className="hidden"
-              onChange={(e) => { handleVideoFile(e.target.files); e.target.value = ""; }}
-            />
-          </div>
-        )}
+          )}
+          <input
+            ref={imgInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={(e) => { handleImageFiles(e.target.files); e.target.value = ""; }}
+          />
+          <input
+            ref={vidInputRef}
+            type="file"
+            accept="video/*"
+            multiple
+            className="hidden"
+            onChange={(e) => { handleVideoFiles(e.target.files); e.target.value = ""; }}
+          />
+        </div>
       </div>
 
       <div className="text-xs text-center text-muted-foreground">
