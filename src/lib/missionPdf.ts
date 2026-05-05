@@ -193,6 +193,14 @@ export async function missionToPDF(m: MissionBase, executorName: string) {
     );
   }
 
+  // Prepend القطاع / الفرقة header
+  const teamName = (m as any).team || "";
+  const headerHtml = htmlKV([
+    ["القطاع", executorName],
+    ["الفرقة المنفذة", teamName],
+  ]);
+  body = headerHtml + body;
+
   // Add image attachments for all mission types
   body += attachmentsHtml(m.attachments);
 
