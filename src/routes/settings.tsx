@@ -214,7 +214,7 @@ function ExecutorsTab() {
   return (
     <div className="space-y-3">
       <div className="flex gap-2">
-        <Input placeholder="اسم الجهة المنفذة" value={name} onChange={(e) => setName(e.target.value)} />
+        <Input placeholder="اسم القطاع" value={name} onChange={(e) => setName(e.target.value)} />
         <Button onClick={add} className="bg-primary"><Plus className="w-4 h-4" /></Button>
       </div>
       {items.map((e) => (
