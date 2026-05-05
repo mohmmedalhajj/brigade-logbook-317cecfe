@@ -358,6 +358,7 @@ export function MissionForm({ existingId, initialType }: Props) {
             date: data.date || todayISO(),
             createdAt: Date.now(),
             executor,
+            team,
             data: finalData,
             attachments,
           };
