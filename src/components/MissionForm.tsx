@@ -117,9 +117,9 @@ export function MissionForm({ existingId, initialType }: Props) {
 
   async function handleImageFiles(files: FileList | null) {
     if (!files) return;
-    const remaining = MAX_ATTACHMENTS - attachments.length;
+    const remaining = MAX_IMAGES - imageCount;
     if (remaining <= 0) {
-      toast.error(`الحد الأقصى ${MAX_ATTACHMENTS} مرفقات`);
+      toast.error(`الحد الأقصى ${MAX_IMAGES} صور`);
       return;
     }
     const toAdd = Array.from(files).slice(0, remaining);
@@ -135,24 +135,32 @@ export function MissionForm({ existingId, initialType }: Props) {
     setAttachments((prev) => [...prev, ...newAttachments]);
   }
 
-  async function handleVideoFile(files: FileList | null) {
-    if (!files || !files[0]) return;
-    const remaining = MAX_ATTACHMENTS - attachments.length;
+  async function handleVideoFiles(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    if (!allowVideo) {
+      toast.error("الفيديو متاح فقط لمهام الاستهداف");
+      return;
+    }
+    const remaining = MAX_VIDEOS - videoCount;
     if (remaining <= 0) {
-      toast.error(`الحد الأقصى ${MAX_ATTACHMENTS} مرفقات`);
+      toast.error(`الحد الأقصى ${MAX_VIDEOS} فيديو`);
       return;
     }
-    const f = files[0];
-    if (f.size > 50 * 1024 * 1024) {
-      toast.error("حجم الفيديو كبير جداً (الحد 50 ميجا)");
-      return;
+    const toAdd = Array.from(files).slice(0, remaining);
+    const newAttachments: MissionAttachment[] = [];
+    for (const f of toAdd) {
+      if (f.size > 50 * 1024 * 1024) {
+        toast.error(`${f.name}: حجم الفيديو كبير (الحد 50 ميجا)`);
+        continue;
+      }
+      try {
+        const dataUrl = await fileToDataUrl(f);
+        newAttachments.push({ type: "video", dataUrl, name: f.name });
+      } catch {
+        toast.error(`فشل تحميل ${f.name}`);
+      }
     }
-    try {
-      const dataUrl = await fileToDataUrl(f);
-      setAttachments((prev) => [...prev, { type: "video", dataUrl, name: f.name }]);
-    } catch {
-      toast.error("فشل تحميل الفيديو");
-    }
+    setAttachments((prev) => [...prev, ...newAttachments]);
   }
 
   function removeAttachment(i: number) {
