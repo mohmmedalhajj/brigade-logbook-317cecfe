@@ -19,7 +19,7 @@ function numberedList(text: string): string {
 export function generateWhatsApp(mission: MissionBase, executorName: string): string {
   const d = mission.data;
   const executor = executorName || mission.executor || "";
-
+  const team = (mission as any).team || "";
   if (mission.type === "recon") {
     return [
       HEADER,
