@@ -84,9 +84,9 @@ export const BUILTIN_TYPES: MissionType[] = [
 ];
 
 export const BUILTIN_EXECUTORS: Executor[] = [
-  { id: "ex1", name: "محور البرح", builtin: true },
-  { id: "ex2", name: "محور حيفان", builtin: true },
-  { id: "ex3", name: "محور حيس", builtin: true },
+  { id: "ex1", name: "قطاع حيفان", builtin: true },
+  { id: "ex2", name: "قطاع البرح", builtin: true },
+  { id: "ex3", name: "قطاع حيس", builtin: true },
 ];
 
 export async function seedIfEmpty() {
