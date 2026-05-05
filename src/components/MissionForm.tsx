@@ -31,8 +31,10 @@ export function MissionForm({ existingId, initialType }: Props) {
   const nav = useNavigate();
   const [types, setTypes] = useState<MissionType[]>([]);
   const [execs, setExecs] = useState<Executor[]>([]);
+  const [teams, setTeams] = useState<string[]>([]);
   const [typeId, setTypeId] = useState<string>(initialType || "recon");
   const [executor, setExecutor] = useState<string>("");
+  const [team, setTeam] = useState<string>("");
   const [data, setData] = useState<Record<string, any>>({ date: todayISO() });
   const [targets, setTargets] = useState<any[]>([]);
   const [attachments, setAttachments] = useState<MissionAttachment[]>([]);
@@ -42,18 +44,25 @@ export function MissionForm({ existingId, initialType }: Props) {
   const imgInputRef = useRef<HTMLInputElement>(null);
   const vidInputRef = useRef<HTMLInputElement>(null);
 
+  const imageCount = attachments.filter((a) => a.type === "image").length;
+  const videoCount = attachments.filter((a) => a.type === "video").length;
+  const allowVideo = typeId === "strike";
+
   useEffect(() => {
     (async () => {
       const t = await getAll<MissionType>("missionTypes");
       const e = await getAll<Executor>("executors");
+      const teamsSaved = await get<{ key: string; value: string[] }>("settings", "teams");
       setTypes(t);
       setExecs(e);
+      setTeams(teamsSaved?.value || []);
       if (existingId) {
         const all = await getAll<MissionBase>("missions");
         const m = all.find((x) => x.id === existingId);
         if (m) {
           setTypeId(m.type);
           setExecutor(m.executor || "");
+          setTeam((m as any).team || "");
           setData(m.data || {});
           setTargets(Array.isArray(m.data?.targets) ? m.data.targets : []);
           setAttachments(m.attachments || []);
@@ -81,13 +90,14 @@ export function MissionForm({ existingId, initialType }: Props) {
         date: data.date || todayISO(),
         createdAt: Date.now(),
         executor,
+        team,
         data: finalData,
         attachments,
       };
       await put("missions", obj);
       if (!missionId) setMissionId(id);
     }, 500);
-  }, [data, targets, typeId, executor, loaded, missionId, attachments]);
+  }, [data, targets, typeId, executor, team, loaded, missionId, attachments]);
 
   const currentType = types.find((t) => t.id === typeId);
 
