@@ -182,15 +182,30 @@ export function MissionForm({ existingId, initialType }: Props) {
           </Select>
         </div>
         <div>
-          <Label className="mb-1 block">الجهة المنفذة</Label>
+          <Label className="mb-1 block">القطاع</Label>
           <Select value={executor} onValueChange={setExecutor}>
-            <SelectTrigger><SelectValue placeholder="اختر..." /></SelectTrigger>
+            <SelectTrigger><SelectValue placeholder="اختر القطاع..." /></SelectTrigger>
             <SelectContent>
               {execs.map((e) => (
                 <SelectItem key={e.id} value={e.name}>{e.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
+        </div>
+        <div className="col-span-2">
+          <Label className="mb-1 block">الفرقة المنفذة</Label>
+          {teams.length > 0 ? (
+            <Select value={team} onValueChange={setTeam}>
+              <SelectTrigger><SelectValue placeholder="اختر الفرقة..." /></SelectTrigger>
+              <SelectContent>
+                {teams.map((tm) => (
+                  <SelectItem key={tm} value={tm}>{tm}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <Input value={team} onChange={(e) => setTeam(e.target.value)} placeholder="أضف الفرق من الإعدادات أو اكتب يدوياً" />
+          )}
         </div>
       </div>
 
