@@ -57,16 +57,8 @@ function attachmentsHtml(attachments?: MissionAttachment[]): string {
     }
     html += `</div>`;
   }
-  if (videos.length > 0) {
-    html += `<h3 style="color:#2d4a2d; margin-top:20px;">المرفقات - مقاطع الفيديو (${videos.length})</h3>`;
-    html += `<ul style="margin-top:8px;">`;
-    for (let i = 0; i < videos.length; i++) {
-      const v = videos[i];
-      html += `<li style="margin:4px 0;">${htmlEscape(v.name || `فيديو ${i + 1}`)}</li>`;
-    }
-    html += `</ul>`;
-    html += `<div style="font-size:11px; color:#555; margin-top:4px;">يتم إرسال مقاطع الفيديو مع التقرير عبر تطبيق المراسلة.</div>`;
-  }
+  // Videos are intentionally NOT included in the PDF — only images are attached.
+  void videos;
   return html;
 }
 
