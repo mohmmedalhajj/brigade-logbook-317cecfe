@@ -226,20 +226,83 @@ export function shareWhatsApp(text: string) {
 }
 
 async function dataUrlToFile(dataUrl: string, filename: string): Promise<File> {
-  // Use fetch instead of atob — handles very large base64 (videos) without memory blow-up.
   const res = await fetch(dataUrl);
   const blob = await res.blob();
   const mime = blob.type || "application/octet-stream";
   return new File([blob], filename, { type: mime });
 }
 
-// Chunk size for Web Share — many platforms cap at ~10 files per share call.
-const SHARE_BATCH_SIZE = 8;
+function isNative(): boolean {
+  try {
+    // @ts-ignore
+    return !!(window as any).Capacitor?.isNativePlatform?.();
+  } catch {
+    return false;
+  }
+}
+
+function dataUrlToBase64(dataUrl: string): string {
+  const i = dataUrl.indexOf(",");
+  return i >= 0 ? dataUrl.slice(i + 1) : dataUrl;
+}
+
+// Native (Android APK) sharing — writes files to cache then opens system share sheet (WhatsApp).
+// Works fully offline. All media is shared in a single intent so WhatsApp receives them together.
+async function shareNativeWithMedia(
+  text: string,
+  attachments: { type: "image" | "video"; dataUrl: string; name?: string }[]
+): Promise<boolean> {
+  try {
+    const { Filesystem, Directory } = await import("@capacitor/filesystem");
+    const { Share } = await import("@capacitor/share");
+    const urls: string[] = [];
+    const stamp = Date.now();
+    for (let i = 0; i < attachments.length; i++) {
+      const att = attachments[i];
+      const ext = att.type === "image" ? "jpg" : "mp4";
+      const name = `${stamp}_${i + 1}_${(att.name || "").replace(/[^\w.-]/g, "_") || `media.${ext}`}`;
+      const path = `wa_share/${name}`;
+      const written = await Filesystem.writeFile({
+        path,
+        data: dataUrlToBase64(att.dataUrl),
+        directory: Directory.Cache,
+        recursive: true,
+      });
+      urls.push(written.uri);
+    }
+    await Share.share({
+      text,
+      files: urls,
+      dialogTitle: "مشاركة عبر واتساب",
+    });
+    return true;
+  } catch (e) {
+    console.warn("Native share failed:", e);
+    return false;
+  }
+}
 
 export async function shareWhatsAppWithMedia(
   text: string,
   attachments: { type: "image" | "video"; dataUrl: string; name?: string }[]
 ) {
+  // Native APK path — direct, offline, full media to WhatsApp.
+  if (isNative()) {
+    if (attachments.length === 0) {
+      try {
+        const { Share } = await import("@capacitor/share");
+        await Share.share({ text, dialogTitle: "مشاركة عبر واتساب" });
+        return;
+      } catch {
+        return;
+      }
+    }
+    const ok = await shareNativeWithMedia(text, attachments);
+    if (ok) return;
+    // fall through to web fallback if native failed
+  }
+
+  // Web fallback — Web Share API with files, then wa.me link.
   const files: File[] = [];
   for (let i = 0; i < attachments.length; i++) {
     const att = attachments[i];
@@ -255,41 +318,18 @@ export async function shareWhatsAppWithMedia(
     return;
   }
 
-  // Web Share API check
-  if (!navigator.canShare || !navigator.canShare({ files: files.slice(0, 1) })) {
-    shareWhatsApp(text);
-    return;
-  }
-
-  // Try sharing all at once first
-  if (navigator.canShare({ files })) {
+  if (navigator.canShare && navigator.canShare({ files })) {
     try {
       await navigator.share({ text, files });
       return;
     } catch (e: any) {
       if (e.name === "AbortError") return;
-      // fall through to batched share
     }
   }
 
-  // Batched share — send in groups so all media is delivered even if platform caps file count.
-  try {
-    for (let i = 0; i < files.length; i += SHARE_BATCH_SIZE) {
-      const batch = files.slice(i, i + SHARE_BATCH_SIZE);
-      const batchText =
-        i === 0
-          ? `${text}\n\n(الجزء ${Math.floor(i / SHARE_BATCH_SIZE) + 1} من ${Math.ceil(files.length / SHARE_BATCH_SIZE)})`
-          : `(الجزء ${Math.floor(i / SHARE_BATCH_SIZE) + 1} من ${Math.ceil(files.length / SHARE_BATCH_SIZE)})`;
-      try {
-        await navigator.share({ text: batchText, files: batch });
-      } catch (e: any) {
-        if (e.name === "AbortError") return;
-      }
-    }
-  } catch {
-    shareWhatsApp(text);
-  }
+  shareWhatsApp(text);
 }
+
 
 export function copyText(text: string) {
   if (navigator.clipboard) navigator.clipboard.writeText(text);
