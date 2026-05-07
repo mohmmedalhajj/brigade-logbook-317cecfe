@@ -193,7 +193,25 @@ export async function exportPDF(opts: PDFOptions) {
         ]);
       } catch {}
     }
-    // Extra settle time for font rendering
+
+    // Wait for ALL <img> elements inside the wrapper to finish loading.
+    // With up to 12 attached images, html2canvas may otherwise capture
+    // empty frames before the data: URLs decode.
+    const imgs = Array.from(wrapper.querySelectorAll("img")) as HTMLImageElement[];
+    await Promise.all(
+      imgs.map(
+        (im) =>
+          new Promise<void>((resolve) => {
+            if (im.complete && im.naturalWidth > 0) return resolve();
+            im.addEventListener("load", () => resolve(), { once: true });
+            im.addEventListener("error", () => resolve(), { once: true });
+            // Hard timeout so a single broken image cannot block export.
+            setTimeout(resolve, 5000);
+          })
+      )
+    );
+
+    // Extra settle time for font/image rendering
     await new Promise((r) => setTimeout(r, 500));
 
     // Resize iframe to fit content for accurate capture

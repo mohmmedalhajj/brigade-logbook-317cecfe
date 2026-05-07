@@ -48,8 +48,12 @@ function attachmentsHtml(attachments?: MissionAttachment[]): string {
   if (images.length > 0) {
     html += `<h3 style="color:#2d4a2d; margin-top:20px;">المرفقات - الصور (${images.length})</h3>`;
     html += `<div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:8px;">`;
-    for (const att of images) {
-      html += `<img src="${att.dataUrl}" style="width:220px; height:auto; border:2px solid #2d4a2d; border-radius:8px; object-fit:cover;" crossorigin="anonymous" />`;
+    for (let i = 0; i < images.length; i++) {
+      const att = images[i];
+      // Use contain + fixed box so all 12 images render uniformly without cropping.
+      html += `<div style="width:230px; height:170px; border:2px solid #2d4a2d; border-radius:8px; background:#f5f7f5; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+        <img src="${att.dataUrl}" style="max-width:100%; max-height:100%; object-fit:contain; display:block;" crossorigin="anonymous" alt="صورة ${i + 1}" />
+      </div>`;
     }
     html += `</div>`;
   }

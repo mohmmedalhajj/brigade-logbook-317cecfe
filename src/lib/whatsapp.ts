@@ -225,14 +225,16 @@ export function shareWhatsApp(text: string) {
   window.open(url, "_blank");
 }
 
-function dataUrlToFile(dataUrl: string, filename: string): File {
-  const [header, base64] = dataUrl.split(",");
-  const mime = header.match(/:(.*?);/)?.[1] || "application/octet-stream";
-  const binary = atob(base64);
-  const arr = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) arr[i] = binary.charCodeAt(i);
-  return new File([arr], filename, { type: mime });
+async function dataUrlToFile(dataUrl: string, filename: string): Promise<File> {
+  // Use fetch instead of atob — handles very large base64 (videos) without memory blow-up.
+  const res = await fetch(dataUrl);
+  const blob = await res.blob();
+  const mime = blob.type || "application/octet-stream";
+  return new File([blob], filename, { type: mime });
 }
+
+// Chunk size for Web Share — many platforms cap at ~10 files per share call.
+const SHARE_BATCH_SIZE = 8;
 
 export async function shareWhatsAppWithMedia(
   text: string,
@@ -244,22 +246,49 @@ export async function shareWhatsAppWithMedia(
     const ext = att.type === "image" ? "jpg" : "mp4";
     const name = att.name || `مرفق_${i + 1}.${ext}`;
     try {
-      files.push(dataUrlToFile(att.dataUrl, name));
+      files.push(await dataUrlToFile(att.dataUrl, name));
     } catch {}
   }
 
-  // Try Web Share API with files
-  if (files.length > 0 && navigator.canShare && navigator.canShare({ files })) {
+  if (files.length === 0) {
+    shareWhatsApp(text);
+    return;
+  }
+
+  // Web Share API check
+  if (!navigator.canShare || !navigator.canShare({ files: files.slice(0, 1) })) {
+    shareWhatsApp(text);
+    return;
+  }
+
+  // Try sharing all at once first
+  if (navigator.canShare({ files })) {
     try {
       await navigator.share({ text, files });
       return;
     } catch (e: any) {
       if (e.name === "AbortError") return;
+      // fall through to batched share
     }
   }
 
-  // Fallback: open WhatsApp with text only
-  shareWhatsApp(text);
+  // Batched share — send in groups so all media is delivered even if platform caps file count.
+  try {
+    for (let i = 0; i < files.length; i += SHARE_BATCH_SIZE) {
+      const batch = files.slice(i, i + SHARE_BATCH_SIZE);
+      const batchText =
+        i === 0
+          ? `${text}\n\n(الجزء ${Math.floor(i / SHARE_BATCH_SIZE) + 1} من ${Math.ceil(files.length / SHARE_BATCH_SIZE)})`
+          : `(الجزء ${Math.floor(i / SHARE_BATCH_SIZE) + 1} من ${Math.ceil(files.length / SHARE_BATCH_SIZE)})`;
+      try {
+        await navigator.share({ text: batchText, files: batch });
+      } catch (e: any) {
+        if (e.name === "AbortError") return;
+      }
+    }
+  } catch {
+    shareWhatsApp(text);
+  }
 }
 
 export function copyText(text: string) {
