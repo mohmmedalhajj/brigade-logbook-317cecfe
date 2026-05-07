@@ -68,14 +68,12 @@ jobs:
       #           -keyalg RSA -keysize 2048 -validity 10000
       #   base64 -w0 release.keystore > release.keystore.b64
       - name: Decode keystore
-        if: ${{ env.HAS_KEYSTORE == 'true' }}
-        env:
-          HAS_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        if: env.HAS_KEYSTORE == 'true'
         run: |
           echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/app/release.keystore
 
       - name: Configure release signing
-        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        if: env.HAS_KEYSTORE == 'true'
         run: |
           cat >> android/app/build.gradle <<'EOF'
 
