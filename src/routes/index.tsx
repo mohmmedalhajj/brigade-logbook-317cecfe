@@ -65,7 +65,7 @@ function Home() {
       <div className="grid grid-cols-2 gap-3">
         <StatCard icon={ListTodo} label="إجمالي المهام" value={missions.length} color="bg-primary" />
         <StatCard icon={Target} label="عدد الأهداف" value={targetsCount} color="bg-blood" />
-        <StatCard icon={Fuel} label="استهلاك المخصصات" value={fuelTotal} color="bg-accent" />
+        <StatCard icon={Fuel} label="استهلاك الإمدادات" value={fuelTotal} color="bg-accent" />
         <StatCard icon={Package} label="عدد العهدات" value={custody.length} color="bg-chart-4" />
       </div>
 
