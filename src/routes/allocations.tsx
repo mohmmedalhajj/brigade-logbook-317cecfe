@@ -34,7 +34,7 @@ const currentTime = () => new Date().toTimeString().slice(0, 5);
 function Allocations() {
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-bold text-gold">المخصصات</h1>
+      <h1 className="text-xl font-bold text-gold">الإمدادات</h1>
       <Tabs defaultValue="fuel">
         <TabsList className="grid grid-cols-3 w-full">
           <TabsTrigger value="fuel">المحروقات</TabsTrigger>
@@ -394,7 +394,7 @@ function StatsTab() {
       `<h3 style="color:#2d4a2d;">سجلات القذائف التفصيلية</h3>` +
       htmlTable(["النوع", "المحور", "العدد", "التاريخ", "الوقت", "ملاحظات"],
         s.map((x) => [x.type, x.executor || "—", x.count, x.date, formatTimeAr(x.time), x.notes || ""]));
-    await exportPDF({ title: `تقرير المخصصات الشهري - ${month}`, bodyHtml: body, filename: `تقرير-المخصصات-${month}.pdf` });
+    await exportPDF({ title: `تقرير الإمدادات الشهري - ${month}`, bodyHtml: body, filename: `تقرير-الإمدادات-${month}.pdf` });
   }
 
   return (

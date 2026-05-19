@@ -7,7 +7,7 @@ const items = [
   { to: "/", label: "الرئيسية", icon: Home },
   { to: "/missions", label: "المهام", icon: ListTodo },
   { to: "/stats", label: "الإحصائيات", icon: BarChart3 },
-  { to: "/allocations", label: "المخصصات", icon: Fuel },
+  { to: "/allocations", label: "الإمدادات", icon: Fuel },
   { to: "/custody", label: "العهدات", icon: Package },
   { to: "/settings", label: "الإعدادات", icon: SettingsIcon },
 ] as const;
