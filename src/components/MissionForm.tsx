@@ -30,8 +30,6 @@ function fileToDataUrl(file: File): Promise<string> {
 export function MissionForm({ existingId, initialType }: Props) {
   const nav = useNavigate();
   const [types, setTypes] = useState<MissionType[]>([]);
-  const [execs, setExecs] = useState<Executor[]>([]);
-  const [teams, setTeams] = useState<string[]>([]);
   const [typeId, setTypeId] = useState<string>(initialType || "recon");
   const [executor, setExecutor] = useState<string>("");
   const [team, setTeam] = useState<string>("");
