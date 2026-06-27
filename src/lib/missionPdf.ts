@@ -189,12 +189,14 @@ export async function missionToPDF(m: MissionBase, executorName: string) {
     );
   }
 
-  // Prepend القطاع / الفرقة header
-  const teamName = (m as any).team || "";
-  const headerHtml = htmlKV([
-    ["القطاع", executorName],
-    ["الفرقة المنفذة", teamName],
-  ]);
+  // Fixed Arabic header block for every report
+  const headerHtml = `
+    <div style="text-align:center; margin-bottom:14px; line-height:1.8;">
+      <div style="font-weight:bold; font-size:16px;">بسم الله الرحمن الرحيم</div>
+      <div style="font-weight:bold; font-size:15px; color:#2d4a2d;">صقور ل35 مشاة قيادة الفرقة الثالثة</div>
+      <div style="font-weight:bold;">الموضوع تقرير مهمة</div>
+      <div style="font-weight:bold;">تفاصيل المهمة</div>
+    </div>`;
   body = headerHtml + body;
 
   // Add image attachments for all mission types
