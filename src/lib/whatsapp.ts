@@ -18,16 +18,10 @@ function numberedList(text: string): string {
 
 export function generateWhatsApp(mission: MissionBase, executorName: string): string {
   const d = mission.data;
-  const executor = executorName || mission.executor || "";
-  const team = (mission as any).team || "";
+  void executorName;
   if (mission.type === "recon") {
     return [
       HEADER,
-      `القطاع: ${executor}`,
-      `الفرقة المنفذة: ${team}`,
-      "الموضوع تقرير مهمة",
-      "",
-      "تفاصيل المهمة",
       line("أمر المهمة من", d.missionOrder),
       "نوع المهمة: استطلاع",
       line("رقم المهمة", d.missionNumber),
@@ -66,11 +60,6 @@ export function generateWhatsApp(mission: MissionBase, executorName: string): st
       : "";
     return [
       HEADER,
-      `القطاع: ${executor}`,
-      `الفرقة المنفذة: ${team}`,
-      "الموضوع تقرير مهمة",
-      "",
-      "تفاصيل المهمة",
       "نوع المهمة: استهداف",
       line("رقم المهمة", d.missionNumber),
       line("جهة الأمر", d.orderSource),
@@ -95,11 +84,6 @@ export function generateWhatsApp(mission: MissionBase, executorName: string): st
   if (mission.type === "artillery") {
     return [
       HEADER,
-      `القطاع: ${executor}`,
-      `الفرقة المنفذة: ${team}`,
-      "الموضوع تقرير مهمة تصحيح مدفعي",
-      "",
-      "تفاصيل المهمة",
       line("رقم المهمة", d.missionNumber),
       line("أمر المهمة", d.missionOrder),
       line("القطاع", d.sector),
@@ -118,11 +102,6 @@ export function generateWhatsApp(mission: MissionBase, executorName: string): st
   if (mission.type === "jamming") {
     return [
       HEADER,
-      `القطاع: ${executor}`,
-      `الفرقة المنفذة: ${team}`,
-      "الموضوع تقرير تشويش",
-      "",
-      "تفاصيل المهمة",
       line("رقم المهمة", d.missionNumber),
       line("أمام قطاع", d.sector),
       line("التاريخ", d.date),
@@ -144,16 +123,8 @@ export function generateWhatsApp(mission: MissionBase, executorName: string): st
   const fields: { key: string; label: string }[] = Array.isArray((mission as any).typeFields)
     ? (mission as any).typeFields
     : [];
-  const typeName = (mission as any).typeName || "";
 
-  const lines = [
-    HEADER,
-    `القطاع: ${executor}`,
-    `الفرقة المنفذة: ${team}`,
-    `الموضوع تقرير ${typeName || "مهمة"}`,
-    "",
-    "تفاصيل المهمة",
-  ];
+  const lines = [HEADER];
 
   if (fields.length > 0) {
     for (const f of fields) {
@@ -161,7 +132,6 @@ export function generateWhatsApp(mission: MissionBase, executorName: string): st
       lines.push(line(f.label, val));
     }
   } else {
-    // Fallback: show raw keys if no field metadata is available
     lines.push(line("رقم المهمة", d.missionNumber));
     for (const [k, v] of Object.entries(d)) {
       if (k === "missionNumber") continue;
