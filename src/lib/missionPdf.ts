@@ -193,7 +193,7 @@ export async function missionToPDF(m: MissionBase, executorName: string) {
   const headerHtml = `
     <div style="margin: 6px 0 18px; border:1.5px solid #2d4a2d; border-radius:10px; overflow:hidden; background:#f5f9f5;">
       <div style="background:linear-gradient(135deg,#2d4a2d,#3d6b3d); color:#fff; text-align:center; padding:12px 16px; font-size:17px; font-weight:700; letter-spacing:0.5px;">
-        صقور لـ 35 مشاة — قيادة الفرقة الثالثة
+        <span dir="rtl">صقور ل </span><span dir="ltr">35</span><span dir="rtl"> مشاة قيادة الفرقة الثالثة</span>
       </div>
       <div style="display:flex; border-top:1px solid #cfd8cf;">
         <div style="flex:1; padding:10px 14px; border-left:1px solid #cfd8cf; background:#eef2ee;">
