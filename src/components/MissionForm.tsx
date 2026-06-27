@@ -50,10 +50,7 @@ export function MissionForm({ existingId, initialType }: Props) {
     (async () => {
       const t = await getAll<MissionType>("missionTypes");
       const e = await getAll<Executor>("executors");
-      const teamsSaved = await get<{ key: string; value: string[] }>("settings", "teams");
       setTypes(t);
-      setExecs(e);
-      setTeams(teamsSaved?.value || []);
       if (existingId) {
         const all = await getAll<MissionBase>("missions");
         const m = all.find((x) => x.id === existingId);
