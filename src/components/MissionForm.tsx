@@ -4,7 +4,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { getAll, put, get, uid, type MissionBase, type MissionType, type Executor, type MissionAttachment } from "@/lib/db";
+import { getAll, put, uid, type MissionBase, type MissionType, type Executor, type MissionAttachment } from "@/lib/db";
 import { useNavigate } from "@tanstack/react-router";
 import { Plus, Trash2, Save, ImagePlus, Video, X } from "lucide-react";
 import { toast } from "sonner";
@@ -30,8 +30,6 @@ function fileToDataUrl(file: File): Promise<string> {
 export function MissionForm({ existingId, initialType }: Props) {
   const nav = useNavigate();
   const [types, setTypes] = useState<MissionType[]>([]);
-  const [execs, setExecs] = useState<Executor[]>([]);
-  const [teams, setTeams] = useState<string[]>([]);
   const [typeId, setTypeId] = useState<string>(initialType || "recon");
   const [executor, setExecutor] = useState<string>("");
   const [team, setTeam] = useState<string>("");
@@ -52,10 +50,7 @@ export function MissionForm({ existingId, initialType }: Props) {
     (async () => {
       const t = await getAll<MissionType>("missionTypes");
       const e = await getAll<Executor>("executors");
-      const teamsSaved = await get<{ key: string; value: string[] }>("settings", "teams");
       setTypes(t);
-      setExecs(e);
-      setTeams(teamsSaved?.value || []);
       if (existingId) {
         const all = await getAll<MissionBase>("missions");
         const m = all.find((x) => x.id === existingId);
@@ -169,44 +164,16 @@ export function MissionForm({ existingId, initialType }: Props) {
 
   return (
     <div className="space-y-4 pb-4">
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <Label className="mb-1 block">نوع المهمة</Label>
-          <Select value={typeId} onValueChange={setTypeId} disabled={!!existingId}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {types.map((t) => (
-                <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label className="mb-1 block">القطاع</Label>
-          <Select value={executor} onValueChange={setExecutor}>
-            <SelectTrigger><SelectValue placeholder="اختر القطاع..." /></SelectTrigger>
-            <SelectContent>
-              {execs.map((e) => (
-                <SelectItem key={e.id} value={e.name}>{e.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="col-span-2">
-          <Label className="mb-1 block">الفرقة المنفذة</Label>
-          {teams.length > 0 ? (
-            <Select value={team} onValueChange={setTeam}>
-              <SelectTrigger><SelectValue placeholder="اختر الفرقة..." /></SelectTrigger>
-              <SelectContent>
-                {teams.map((tm) => (
-                  <SelectItem key={tm} value={tm}>{tm}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          ) : (
-            <Input value={team} onChange={(e) => setTeam(e.target.value)} placeholder="أضف الفرق من الإعدادات أو اكتب يدوياً" />
-          )}
-        </div>
+      <div>
+        <Label className="mb-1 block">نوع المهمة</Label>
+        <Select value={typeId} onValueChange={setTypeId} disabled={!!existingId}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {types.map((t) => (
+              <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="military-card rounded-xl p-4 space-y-3">
