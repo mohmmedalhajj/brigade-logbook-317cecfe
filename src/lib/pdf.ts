@@ -269,17 +269,27 @@ export function htmlEscape(s: any): string {
 
 export function htmlTable(headers: string[], rows: any[][]): string {
   return `
-    <table style="width:100%; border-collapse:collapse; margin:8px 0;">
+    <table style="width:100%; border-collapse:collapse; margin:12px 0; border:1.5px solid #2d4a2d; border-radius:8px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
       <thead>
         <tr>
-          ${headers.map((h) => `<th style="border:1px solid #2d4a2d; background:#2d4a2d; color:#fff; padding:8px; text-align:right;">${htmlEscape(h)}</th>`).join("")}
+          ${headers
+            .map(
+              (h) =>
+                `<th style="background:linear-gradient(135deg,#2d4a2d,#3d6b3d); color:#fff; padding:10px 8px; text-align:center; font-weight:700; font-size:13px; border-left:1px solid rgba(255,255,255,0.2);">${htmlEscape(h)}</th>`
+            )
+            .join("")}
         </tr>
       </thead>
       <tbody>
         ${rows
           .map(
-            (r, i) => `<tr style="background:${i % 2 ? "#f5f7f5" : "#fff"};">
-            ${r.map((c) => `<td style="border:1px solid #cfd8cf; padding:8px; text-align:right; vertical-align:top;">${htmlEscape(c)}</td>`).join("")}
+            (r, i) => `<tr style="background:${i % 2 ? "#f5f9f5" : "#ffffff"};">
+            ${r
+              .map(
+                (c) =>
+                  `<td style="border:1px solid #d4e0d4; padding:9px 8px; text-align:right; vertical-align:top; font-size:13px;">${htmlEscape(c)}</td>`
+              )
+              .join("")}
           </tr>`
           )
           .join("")}
@@ -290,13 +300,13 @@ export function htmlTable(headers: string[], rows: any[][]): string {
 
 export function htmlKV(pairs: [string, any][]): string {
   return `
-    <table style="width:100%; border-collapse:collapse; margin:8px 0;">
+    <table style="width:100%; border-collapse:collapse; margin:12px 0; border:1.5px solid #2d4a2d; border-radius:8px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
       <tbody>
         ${pairs
           .map(
-            ([k, v]) => `<tr>
-          <td style="border:1px solid #cfd8cf; background:#eef2ee; padding:8px; width:35%; font-weight:bold;">${htmlEscape(k)}</td>
-          <td style="border:1px solid #cfd8cf; padding:8px;">${htmlEscape(v)}</td>
+            ([k, v], i) => `<tr style="background:${i % 2 ? "#ffffff" : "#f5f9f5"};">
+          <td style="border-bottom:1px solid #d4e0d4; border-left:1px solid #d4e0d4; background:linear-gradient(135deg,#eef5ee,#e1ece1); padding:10px 12px; width:32%; font-weight:700; color:#2d4a2d; font-size:13px; text-align:right;">${htmlEscape(k)}</td>
+          <td style="border-bottom:1px solid #d4e0d4; padding:10px 12px; font-size:13px; text-align:right;">${htmlEscape(v)}</td>
         </tr>`
           )
           .join("")}
