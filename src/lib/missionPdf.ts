@@ -189,13 +189,22 @@ export async function missionToPDF(m: MissionBase, executorName: string) {
     );
   }
 
-  // Fixed Arabic header block for every report
+  // Professional Arabic header block (Basmala is rendered once at the top of the PDF shell)
   const headerHtml = `
-    <div style="text-align:center; margin-bottom:14px; line-height:1.8;">
-      <div style="font-weight:bold; font-size:16px;">بسم الله الرحمن الرحيم</div>
-      <div style="font-weight:bold; font-size:15px; color:#2d4a2d;">صقور ل35 مشاة قيادة الفرقة الثالثة</div>
-      <div style="font-weight:bold;">الموضوع تقرير مهمة</div>
-      <div style="font-weight:bold;">تفاصيل المهمة</div>
+    <div style="margin: 6px 0 18px; border:1.5px solid #2d4a2d; border-radius:10px; overflow:hidden; background:#f5f9f5;">
+      <div style="background:linear-gradient(135deg,#2d4a2d,#3d6b3d); color:#fff; text-align:center; padding:12px 16px; font-size:17px; font-weight:700; letter-spacing:0.5px;">
+        صقور لـ 35 مشاة — قيادة الفرقة الثالثة
+      </div>
+      <div style="display:flex; border-top:1px solid #cfd8cf;">
+        <div style="flex:1; padding:10px 14px; border-left:1px solid #cfd8cf; background:#eef2ee;">
+          <span style="font-weight:bold; color:#2d4a2d;">الموضوع:</span>
+          <span style="margin-right:6px;">تقرير مهمة</span>
+        </div>
+        <div style="flex:1; padding:10px 14px;">
+          <span style="font-weight:bold; color:#2d4a2d;">المحتوى:</span>
+          <span style="margin-right:6px;">تفاصيل المهمة</span>
+        </div>
+      </div>
     </div>`;
   body = headerHtml + body;
 
